@@ -1,0 +1,18 @@
+--------------------------------------------------------------------------------
+//create key and ceticate request
+openssl req -new -newkey rsa:2048 -nodes -keyout etpri.org.key -out etpri.org.csr
+Country Name (2 letter code) []:US
+State or Province Name (full name) []:Tennessee
+Locality Name (eg, city) []:Knoxville
+Organization Name (eg, company) []:East Tennessee Permaculture Research Institute
+Organizational Unit Name (eg, section) []:
+Common Name (eg, fully qualified host name) []:etpri.org
+Email Address []:dwbolt@etpri.org
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+
+//self sign
+openssl x509 -req -days 365 -in etpri.org.csr -signkey etpri.org.key -out etpri.org.crt
+

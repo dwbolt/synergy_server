@@ -1,0 +1,8 @@
+{
+"filePath":    "../../local.SFCknox.org/synergy/"
+,"mainDB":"etpri"
+,"subApps": {
+   "etpri":     {"filePath": "../../local.SFCknox.org/etpri/current"}
+  ,"harmony":   {"filePath": "../../local.SFCknox.org/harmony/current"}
+  }
+}

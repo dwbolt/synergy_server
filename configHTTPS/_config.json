@@ -1,0 +1,35 @@
+{
+"port": 443,
+"hosts":  {"127.0.0.1": "load"},
+"maxSessionAge":{"minutes": 60, "seconds": 10},
+"couchDB": "ibm",
+
+"digitalOcean": {
+  "protocol": "https:",
+  "host": "68.183.31.77",
+  "port": "6984",
+  "auth": "dwbolt:dwbolt",
+  "headers": {"Content-Type": "application/json"},
+  "mainDB":"harmony",
+  "errorDB":"harmony_developers",
+  "replicateDB":"_replicator",
+  "rejectUnauthorized":false
+  },
+
+"ibm": {
+  "protocol": "https:",
+  "host": "ad8d2e73-d414-48c9-92f7-6d12276adeea-bluemix.cloudant.com",
+  "auth": "husdowereposteneartingid:b93c38c1482e9ad68e19f04f3a6e9f35e2f6de06",
+  "headers": {"Content-Type": "application/json"},
+  "mainDB":"harmony",
+  "errorDB":"harmony_developers",
+  "replicateDB":"_replicator"
+  },
+
+ "local": {
+  "protocol": "http:",
+  "host": "127.0.0.1",
+  "port": "443",
+  "username": "",
+  "password": ""}
+}

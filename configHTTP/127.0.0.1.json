@@ -1,0 +1,8 @@
+{
+"filePath": "../../local.etpri.org/_default/current",
+"mainDB":"etpri",
+"subApps": {
+   "synergy":     {"filePath": "../../local.etpri.org/synergy/current"}
+  ,"harmony":     {"filePath": "../../local.etpri.org/harmony/current"}
+  }
+}
