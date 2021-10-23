@@ -1,5 +1,0 @@
-#!/bin/bash
-cd "${0%/*}"
-rsync -avz server/*.js dwbolt@dev.etpri.org:~/server
-rsync -avz server/node_modules/* dwbolt@dev.etpri.org:~/server/node_modules
-#rsync -avz server/certificates/* dwbolt@dev.etpri.org:~/server/certificates
