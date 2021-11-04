@@ -1,8 +1,10 @@
 {
-"filePath":    "../../local.SFCknox.org/synergy/"
+"filePath":    "../../synergyWeb/synergyWeb"
 ,"mainDB":"etpri"
 ,"subApps": {
-   "etpri":     {"filePath": "../../local.SFCknox.org/etpri/current"}
-  ,"harmony":   {"filePath": "../../local.SFCknox.org/harmony/current"}
+   "synergyData": {"filePath": "../../synergyData/synergyData"}
+  ,"etpri":       {"filePath": "../../etpri/current"}
+  ,"harmony":     {"filePath": "../../harmony/current"}
+
   }
 }
