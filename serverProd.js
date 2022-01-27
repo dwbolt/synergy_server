@@ -10,7 +10,7 @@ API to webserver
 const https    = require('https');  // access to https protocal
 const fs       = require('fs');     // access to local server file system
 
-app = new (require('./server.js'))("./configHTTPS");  // class where the work gets done
+app = new (require('./server.js'))("./configProd");  // class where the work gets done
 
 // helper functions to get access to app object
 function requestIn(  request, response) {app.requestIn(           request, response);}
@@ -23,12 +23,6 @@ https.createServer(
   key:  fs.readFileSync('certificates/prod_sfcknox_org_key')
  ,cert: fs.readFileSync('certificates/prod.sfcknox.org.crt')
  ,ca:   fs.readFileSync('certificates/prod.sfcknox.org.ca-bundle')
-
-/*
-   key:  fs.readFileSync('certificates/etpri.org.key')
-  ,cert: fs.readFileSync('certificates/323180705a35f86f.crt')
-  ,ca:   fs.readFileSync('certificates/gd_bundle-g2-g1.crt')
-*/
   },requestIn
 ).listen(app.config.port);
 

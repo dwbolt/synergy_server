@@ -175,7 +175,7 @@ serveFile(request, response) { // private:serve static file. could be html, JSON
 // response
 web(obj, request, response) {  // private: process request
   if        ( typeof( this[obj.msg] )          === "function") {
-             this[obj.msg](obj, request, response);
+    this[obj.msg](         obj, request, response);
   } else if ( typeof( this.sessions[obj.msg] ) === "function") {
     this.sessions[obj.msg](obj, request, response);
   } else {
@@ -399,7 +399,15 @@ checkDirectory(path) {
 // request  ->
 // response ->
 upload(obj, request, response) {
-  const directory = this.getDirectory(request);
+  // convert app directoruy to OS direcrtory
+  const hostName = request.headers.host.split(":")[0];
+  const subApp = obj.path.split("/")[1];             // get the directory or application name
+  const subAppConfig = this.config.hosts[hostName].subApps[ subApp ];  // try to get config for an application
+  let directory = `${this.config.hosts[hostName].filePath}`;
+  if (subAppConfig) {
+    directory = `${subAppConfig.filePath}`;
+  }
+
   const path = `${directory}/${obj.path}/${obj.name}.${obj.extension}`;
 
   let fileBinaryArray = [];
@@ -427,13 +435,18 @@ upload(obj, request, response) {
 // request  ->
 // response
 async uploadFile(obj, request, response) {
-  const directory = this.getDirectory(request);
-  const path = `${directory}/${obj.path}/${obj.name}`;
+  const hostName = request.headers.host.split(":")[0];
+  const subAppConfig = this.config.hosts[hostName].subApps[ obj.virDir ];  // try to get config for an application
+  let directory = `${this.config.hosts[hostName].filePath}`;
+  if (subAppConfig) {
+    directory = `${subAppConfig.filePath}`;
+  }
+
+  const path = `${directory}/${obj.app}/${obj.dir}`;
 
   try {
-   await this.verifyPath(`${directory}/${obj.path}`) // create file path if it does not exists
-//        await this.verifyPath(`../../local.etpri.org/synergy/download`); // create file path if it does not exists
-    await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFilet
+   await this.verifyPath(path) // create file path if it does not exists
+   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFilet
   } catch (e) {
     console.log(e);
   }
