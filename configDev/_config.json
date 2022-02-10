@@ -1,5 +1,5 @@
 {
-"port": 443,
+"port": 8443,
 "hosts":  {"127.0.0.1": "load"},
 "maxSessionAge":{"minutes": 60, "seconds": 10},
 "couchDB": "ibm",

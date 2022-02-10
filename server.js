@@ -435,9 +435,9 @@ upload(obj, request, response) {
 // request  ->
 // response
 async uploadFile(obj, request, response) {
-  const hostName = request.headers.host.split(":")[0];
+  const hostName     = request.headers.host.split(":")[0];
   const subAppConfig = this.config.hosts[hostName].subApps[ obj.virDir ];  // try to get config for an application
-  let directory = `${this.config.hosts[hostName].filePath}`;
+  let directory      = `${this.config.hosts[hostName].filePath}`;
   if (subAppConfig) {
     directory = `${subAppConfig.filePath}`;
   }
@@ -446,7 +446,7 @@ async uploadFile(obj, request, response) {
 
   try {
    await this.verifyPath(path) // create file path if it does not exists
-   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFilet
+   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
   } catch (e) {
     console.log(e);
   }
