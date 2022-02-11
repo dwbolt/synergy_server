@@ -130,6 +130,8 @@ login(
   ,request   // request ->
   ,response  // response ->
 ) {
+
+  /*
   var response2client={}; // I think this should be an object so the attributes can have meaningful names instead of numbers
   response2client.serverLocation = app.config.couchDB.slice(7); // couchDB's value will be "couchDBlocal" or "couchDBremote" - remove the "couchDB" to get the location
   response2client.webserver = app.config.webserver;
@@ -148,12 +150,15 @@ login(
     const pathArray = filePath.split("/");
     response2client.version = pathArray[pathArray.length - 2] +"("+ pathArray[pathArray.length - 1] + ")"; // last entry - for instance, if the path were etpri/harmony/0.9.5, the version would be harmony(0.9.5).
     response2client.subapp = subapp;
+  }  else {
+    subapp = "default"; // Any URL that doesn't reference a valid subapp should refer to the default page
   }
-  else subapp = "default"; // Any URL that doesn't reference a valid subapp should refer to the default page
+  */
 
   const sessionKey = this.checkCookies(request, response);
 
-  if (sessionKey) { // If we've gotten this far, there IS a valid session
+  if (sessionKey) {
+    // If we've gotten this far, there IS a valid session
     const token =request.headers.authorization;
     var username="",password="";
 
@@ -167,7 +172,7 @@ login(
     }
 
     let results = {};
-
+/*
     this.lookForUser(username, password) // Step 1: Find the user doc. Everything else depends on that.
     .then(function(userDoc) { // Step 2: Get the user's people doc and their permissions (and the resources the permissions attach to)
       let userGUID = null;
@@ -248,7 +253,9 @@ login(
       console.log(err);
       this.responseEnd(response, err); // This is what sends the error message to the client.
     }.bind(this));
+    */
   }
+
 }
 
 
