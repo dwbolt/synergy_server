@@ -16,11 +16,11 @@ This is because app.sessions.reponseEnd keeps track of the time it took for a re
 
 */
 
-// class server
-module.exports = class server {
+//  serverClass
+module.exports = class serverClass {
 
 
-// class server
+//  serverClass
 constructor (s_configDir) {
   // native nodejs modules
   this.https    = require('https');     // process https requests
@@ -31,12 +31,12 @@ constructor (s_configDir) {
 
   this.config = this.loadConfiguration(s_configDir);
 
-  this.couchConfig = this.config[this.config.couchDB];
+  //this.couchConfig = this.config[this.config.couchDB];
 
   // local classes
-  this.couchDB        = new (require('./couchDB.js'             ))(this.couchConfig);
-  this.couchdbProxy   = new (require('./couchdbProxy.js'        ))(this.couchConfig);
-  this.couchdbNoLogin = new (require('./couchdbProxyNoLogin.js' ))(this.couchConfig, this.config);
+//  this.couchDB        = new (require('./couchDB.js'             ))(this.couchConfig);
+//  this.couchdbProxy   = new (require('./couchdbProxy.js'        ))(this.couchConfig);
+//  this.couchdbNoLogin = new (require('./couchdbProxyNoLogin.js' ))(this.couchConfig, this.config);
   this.picServer      = new (require('./picServer.js'           ))(this.couchConfig, this.config);
   this.sessions       = new (require('./sessions.js'            ))(this.couchConfig, this.config);
 
@@ -61,7 +61,7 @@ constructor (s_configDir) {
 }
 
 
-// class server
+//  serverClass
 //                       this is where it starts
 // request ->
 // response ->
@@ -86,7 +86,7 @@ requestIn(request, response) {  // public: requests start here
 }
 
 
-// class server
+//  serverClass
 loadConfiguration(s_configDir) { // private:
   // configuration file
   const config  = require(`./${s_configDir}/_config.json`);   // ports, domains served, etc on server
@@ -110,7 +110,7 @@ loadConfiguration(s_configDir) { // private:
 }
 
 
-// class server
+//  serverClass
 serveFile(request, response) { // private:serve static file. could be html, JSON, etc
     // serve the default application
     const hostName = request.headers.host.split(":")[0];  // just want hostname, without port #
@@ -169,14 +169,16 @@ serveFile(request, response) { // private:serve static file. could be html, JSON
 }
 
 
-// class server
+//  serverClass
 // obj
 // request
 // response
 web(obj, request, response) {  // private: process request
-  if        ( typeof( this[obj.msg] )          === "function") {
+  if        ( typeof( this[         obj.msg] )=== "function") {
+    // there is a serverClass method
     this[obj.msg](         obj, request, response);
   } else if ( typeof( this.sessions[obj.msg] ) === "function") {
+    // there is a sessionsClass method
     this.sessions[obj.msg](obj, request, response);
   } else {
     // get error to user, add to server log
@@ -185,10 +187,12 @@ web(obj, request, response) {  // private: process request
 }
 
 
-// class server
-// request ->
-// response ->
-POST(request, response) { // private:
+//  serverClass
+// private:
+POST(
+   request  // request ->
+  ,response  // response ->
+) {
   let body = '';
   request.on('data', chunk => {
       body += chunk.toString(); // convert Buffer to string
@@ -204,18 +208,11 @@ POST(request, response) { // private:
     }
 
     switch (obj.server) {
-      case "couchDB":
-        // const cookie = this.sessions.parseCookies(request); // This method was marked "private", but I don't see any particular reason why - ask about this later
-        this.couchdbProxy.request(obj, request, response, obj.DB);
-        break;
-      case "couchDBNoLogin":
-        this.couchdbNoLogin.request(obj, request, response)
-        break;
        case "web":
-        this.web(obj, request, response);
+        this.web(                obj, request, response);
         break;
       case "pic":
-        this.picServer.requestIn(obj, request, response)
+        this.picServer.requestIn(obj, request, response);
         break;
       default:
         // get error to user, add to server log
@@ -225,7 +222,7 @@ POST(request, response) { // private:
 }
 
 
-// class server
+//  serverClass
 error(obj, request, response) {  // private:
   const data = obj.data;
   const errorObj = {
@@ -237,7 +234,7 @@ error(obj, request, response) {  // private:
 }
 
 
-// class server
+//  serverClass
 publishCalendarMonth(obj, request, response) {  // private:
   const cookie = this.sessions.parseCookies(request);
 
@@ -263,7 +260,7 @@ publishCalendarMonth(obj, request, response) {  // private:
 }
 
 
-// class server
+//  serverClass
 replicate(requestObj, request, response) { // private:
   const cookie = this.sessions.parseCookies(request);
 
@@ -340,7 +337,7 @@ replicate(requestObj, request, response) { // private:
 }
 
 
-// class server
+//  serverClass
 getFromHarmonyByID(obj, request, response) { // private:
   const IDs = obj.IDs;
   const cookie = this.sessions.parseCookies(request);
@@ -364,7 +361,7 @@ getFromHarmonyByID(obj, request, response) { // private:
 }
 
 
-// class server
+//  serverClass
 getFileNames(obj, request, response) {
   const data = obj.data;
   const directory = this.getDirectory(request);
@@ -378,7 +375,7 @@ getFileNames(obj, request, response) {
 }
 
 
-// class server
+//  serverClass
 checkDirectory(path) {
   const steps = path.split("/");
   let partialPath = steps[0];
@@ -534,7 +531,7 @@ removeDBSuffix (idString) {
 }
 
 
-// class server
+//  serverClass
 addDBSuffix (idString, DB) {
 	if (!DB) DB = this.login.DB;
 
@@ -544,4 +541,7 @@ addDBSuffix (idString, DB) {
   }
 	return newID;
 }
-} //////// end of class def
+
+
+//  serverClass
+} //////// end of class

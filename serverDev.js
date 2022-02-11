@@ -1,7 +1,6 @@
 /*
 
 small web server that serves static files and a
-API to couchDB  (json document database)
 API to webserver
 
 */

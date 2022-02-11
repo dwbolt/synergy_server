@@ -34,13 +34,14 @@ server logs  // used for none real time analysis
 
 
 // class sessions
-module.exports = class sessions {
+module.exports = class sessionsClass {
 
 
-// class sessions
-// configDB ->
-// config  ->
-constructor (configDB, config) {
+// sessionsClass
+constructor (
+  configDB   // configDB ->
+  , config   // config  ->
+) {
     // used for admin to see the current state of the server in real time, all data is sent client side to be viewed
     // static
     this.serverStart  = Date.now();
@@ -63,19 +64,22 @@ constructor (configDB, config) {
   }
 
 
-// class sessions
-// obj ->
-// request ->
-// response ->
-getSessionData(obj, request,response){  // public, return sessions object
+// sessionsClass
+getSessionData(
+  obj        // obj ->
+  ,request   // request ->
+  ,response  // response ->
+){  // public, return sessions object
   this.responseEnd(response, JSON.stringify(this));
 }
 
 
-// class sessions
-// request ->
-// response ->
-log(request, response) { // public, called from server.js when server request first comes in
+// sessionsClass
+// public, called from server.js when server request first comes in
+log(
+    request    // request ->
+  , response   // response ->
+) {
 
   console.log(`Started: Method: ${request.method}, url: ${request.url}`);
 
@@ -102,10 +106,12 @@ log(request, response) { // public, called from server.js when server request fi
 }
 
 
-// class sessions
-// response ->
-// content ->
-responseEnd(response, content) {  // public, called to end response back to client
+// sessionsClass
+// public, called to end response back to client
+responseEnd(
+   response  // response ->
+  ,content   // content ->
+) {
   // make request complete not written yet (This needs punctuating, but I don't understand it well enough to try.)
   response.end(content);  // tell the client there is no more coming
   delete this.openRequests[response.harmonyRequest];  // remove from openRequest object
@@ -117,11 +123,13 @@ responseEnd(response, content) {  // public, called to end response back to clie
 }
 
 
-// class sessions
-// userObj ->
-// request ->
-// response ->
-login(userObj, request, response) { // public, used to login from html page
+// sessionsClass
+// public, used to login from html page
+login(
+  userObj    // userObj ->
+  ,request   // request ->
+  ,response  // response ->
+) {
   var response2client={}; // I think this should be an object so the attributes can have meaningful names instead of numbers
   response2client.serverLocation = app.config.couchDB.slice(7); // couchDB's value will be "couchDBlocal" or "couchDBremote" - remove the "couchDB" to get the location
   response2client.webserver = app.config.webserver;
@@ -244,9 +252,11 @@ login(userObj, request, response) { // public, used to login from html page
 }
 
 
-// class sessions
-// sessionKey ->
-initSession(sessionKey) {  // private, init Session object
+// sessionsClass
+// private, init Session object
+initSession(
+  sessionKey  // sessionKey ->
+) {
   this.sessions[sessionKey]={};
   const s = this.sessions[sessionKey];
 
@@ -292,10 +302,9 @@ responseAddProxy(response, proxObj) {
 }
 
 
-// class sessions
-cleanUp() {   // private
-  // see if any pending reqests need to be culled AMF - What does this mean?
-
+// sessionsClass
+// private - called every second to get rid of inactive sessions
+cleanUp() {
   // see if any sessions need to be culled
   for (let sess in this.sessions) { // Go through all existing sessions
     const session = this.sessions[sess];
@@ -315,9 +324,11 @@ cleanUp() {   // private
 }
 
 
-// class sessions
-// request ->
-parseCookies (request) { // private, put cookies in an object so that they can be accessed easily
+// sessionsClass
+// private, put cookies in an object so that they can be accessed easily
+parseCookies (
+  request  // request ->
+) {
   // https://stackoverflow.com/questions/3393854/get-and-set-a-single-cookie-with-node-js-http-server
   const list = {};
   let rc = null;
@@ -342,9 +353,10 @@ parseCookies (request) { // private, put cookies in an object so that they can b
 }
 
 
-// class sessions
-// response ->
-parseSetCookies(response) {
+// sessionsClass
+parseSetCookies(
+  response // response ->
+) {
   const list = {};
   let rc = null;
 
@@ -366,11 +378,13 @@ parseSetCookies(response) {
 }
 
 
-// class sessions
-// subApp
-// request ->
-// response ->
-authorizedSubApp(subApp, request, response) {   // ?? used to login from html page
+// sessionsClass
+// ?? used to login from html page
+authorizedSubApp(
+   subApp    // subApp
+  ,request   // request ->
+  ,response  // response ->
+) {
   // get from database, for now hard code protection of harmony
   if (! subApp == "harmony") {
     return true;  // no authorization needed
@@ -397,10 +411,11 @@ authorizedSubApp(subApp, request, response) {   // ?? used to login from html pa
 }
 
 
-// class sessions
-// request
-// response
-checkCookies(request, response) {
+// sessionsClass
+checkCookies(
+   request   // request
+  ,response  // response
+) {
   let sessionKey = null;
 
   let cookie = this.parseCookies(request); // If a session was already running, gets its cookie
@@ -421,10 +436,11 @@ checkCookies(request, response) {
 }
 
 
-// class sessions
-// name ->
-// password ->
-lookForUser(name, password) {
+// sessionsClass
+lookForUser(
+  name       // name ->
+  ,password  // password ->
+) {
   const obj = {
   "path": `/${this.configDB.mainDB}/_find`, // Should ALWAYS search for login info in the main DB
   "method": "post"}
@@ -446,10 +462,11 @@ lookForUser(name, password) {
 }
 
 
-// class sessions
-// db ->
-// userGUID ->
-lookForPermissions(db, userGUID) {
+// sessionsClass
+lookForPermissions(
+   db        // db ->
+  ,userGUID // userGUID ->
+) {
   const obj = {"path": `/${db}/_find`, "method": "post"};
   return app.couchDB.request(obj,`{
     "selector": {
@@ -465,10 +482,11 @@ lookForPermissions(db, userGUID) {
 }
 
 
-// class sessions
-// db
-// docs
-lookForResources(db, docs) {
+// sessionsClass
+lookForResources(
+  db     // db
+  ,docs  // docs
+) {
   let resources = [];
   docs.forEach(doc => {
     resources.push(app.removeDBSuffix(doc.data.k_toID));
@@ -491,7 +509,7 @@ lookForResources(db, docs) {
 }
 
 
-// class sessions
+// sessionsClass
 // relations  ->
 // nodes ->
 // direction ->
@@ -501,7 +519,7 @@ filterRelations(relations, nodes, direction) {
 }
 
 
-// class sessions
+// sessionsClass
 // db
 // GUID
 lookForGUID(db, GUID) {
@@ -510,7 +528,7 @@ lookForGUID(db, GUID) {
 }
 
 
-// class sessions
+// sessionsClass
 // requestObj
 // request
 // response
@@ -558,7 +576,7 @@ changeProfile(requestObj, request, response) {
 }
 
 
-// class sessions
+// sessionsClass
 // obj ->
 // request ->
 // response ->
@@ -569,5 +587,5 @@ logout(obj, request, response) {
 }
 
 
-// class sessions
+// sessionsClass
 } //////// end
