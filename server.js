@@ -2,7 +2,6 @@
 
 small web server that serves static files and is an:
 
-  API into couchDB, json document store
   API into web, messages to reload config, give status, etc.
 
 requestIn(request, response) is called for each request comming in
@@ -28,7 +27,6 @@ constructor (s_configDir) {
   this.fs       = require('fs'); // access local file system
   this.path     = require('path');      // used once (maybe use string function insead)
   this.uuidv1   = require('uuid/v1');   // Generate GUIDs
-
   this.config = this.loadConfiguration(s_configDir);
 
   //this.couchConfig = this.config[this.config.couchDB];
@@ -37,8 +35,8 @@ constructor (s_configDir) {
 //  this.couchDB        = new (require('./couchDB.js'             ))(this.couchConfig);
 //  this.couchdbProxy   = new (require('./couchdbProxy.js'        ))(this.couchConfig);
 //  this.couchdbNoLogin = new (require('./couchdbProxyNoLogin.js' ))(this.couchConfig, this.config);
-  this.picServer      = new (require('./picServer.js'           ))(this.couchConfig, this.config);
-  this.sessions       = new (require('./sessions.js'            ))(this.couchConfig, this.config);
+//  this.picServer      = new (require('./picServer.js'           ))(this.couchConfig, this.config);
+  this.sessions       = new (require('./sessions.js'            ))(this.couchConfig, s_configDir);
 
   this.mimeTypes = {
       '.html': 'text/html',

@@ -1,11 +1,6 @@
 {
-"filePath":    "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyWeb/synergyWeb"
-,"mainDB":"etpri"
+"filePath":                     "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyWeb/synergyWeb"
 ,"subApps": {
    "synergyData":  {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyData/synergyData"}
-  ,"synergyUsers": {"filePath": "../../synergyData/synergyUsers"}
-  ,"etpri":        {"filePath": "../../etpri/current"}
-  ,"harmony":      {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/harmony/harmony"}
-
   }
 }

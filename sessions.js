@@ -39,13 +39,12 @@ module.exports = class sessionsClass {
 
 // sessionsClass
 constructor (
-  configDB   // configDB ->
-  , config   // config  ->
+   configDB   // configDB -> not used now that couchDB is not used
+  ,configDir  // location of configuration directory
 ) {
     // used for admin to see the current state of the server in real time, all data is sent client side to be viewed
     // static
     this.serverStart  = Date.now();
-    this.config       = config;
     this.configDB     = configDB
 
     // requests
@@ -55,13 +54,13 @@ constructor (
 
     // open sessions
     this.sessions     = {};  // open sessions
-
+    this.users        =  require(`./${configDir}/users.json`);
 
     // set timer to run cleanUp every second
     setInterval(function() {
       this.cleanUp();
     }.bind(this), 1000);
-  }
+}
 
 
 // sessionsClass
@@ -129,134 +128,19 @@ login(
   userObj    // userObj ->
   ,request   // request ->
   ,response  // response ->
-) {
+){
 
-  /*
-  var response2client={}; // I think this should be an object so the attributes can have meaningful names instead of numbers
-  response2client.serverLocation = app.config.couchDB.slice(7); // couchDB's value will be "couchDBlocal" or "couchDBremote" - remove the "couchDB" to get the location
-  response2client.webserver = app.config.webserver;
+  //const sessionKey = this.checkCookies(request, response);
+  const user = userObj.user;
+  const pwd  = userObj.pwd;
 
-  const origin = request.headers.origin; // ex. https://local.etpri.org:8443
-  const hostName = request.headers.host.split(":")[0]; // ex. local.etpri.org,
-  const referer = request.headers.referer; // ex. https://local.etpri.org:8443/harmony/, , https://dev.etpri.org/?page='home', or https://etpri.org/harmonyBeta
-
-  // hopefully there will never be subapps of subapps - if so, have to ask UD how they're formatted
-  const refererPath = referer.replace(origin, ""); // ex. /harmony/
-  const refererArray = refererPath.split("/"); // ex. ["", "harmony", ""]
-  let subapp = refererArray[1];  // ex. harmony
-  const subapps = app.config.hosts[hostName].subApps;
-  if (subapp in subapps) {
-    const filePath = subapps[subapp].filePath;
-    const pathArray = filePath.split("/");
-    response2client.version = pathArray[pathArray.length - 2] +"("+ pathArray[pathArray.length - 1] + ")"; // last entry - for instance, if the path were etpri/harmony/0.9.5, the version would be harmony(0.9.5).
-    response2client.subapp = subapp;
-  }  else {
-    subapp = "default"; // Any URL that doesn't reference a valid subapp should refer to the default page
+  if (this.users[user] && this.users[user].loginPwd === pwd) {
+    this.responseEnd(response,'{"msg":true}');
+  } else {
+    this.responseEnd(response,'{"msg":false}');
   }
-  */
-
-  const sessionKey = this.checkCookies(request, response);
-
-  if (sessionKey) {
-    // If we've gotten this far, there IS a valid session
-    const token =request.headers.authorization;
-    var username="",password="";
-
-    // get username and password from header
-    if (token) {
-      const auth=Buffer.from(token.split(" ")[1], 'base64').toString()
-      const parts=auth.split(/:/);                 // split on colon
-      username=parts[0];
-      password=parts[1];
-      response2client.username = username;
-    }
-
-    let results = {};
-/*
-    this.lookForUser(username, password) // Step 1: Find the user doc. Everything else depends on that.
-    .then(function(userDoc) { // Step 2: Get the user's people doc and their permissions (and the resources the permissions attach to)
-      let userGUID = null;
-      if (!userDoc || !userDoc.docs) return Promise.reject("Bad response from database")
-      else if (userDoc.docs.length === 0) return Promise.reject("No user")
-      else if (userDoc.docs.length > 1) return Promise.reject("Multiple users")
-      else { // If a SINGLE user was found with the given name and password, login is possible (not yet guaranteed)
-        const user = userDoc.docs[0];
-        const userGUID = user._id;
-        response2client.userGUID = user._id;
-
-        results.user = user;
-        const promises = [];
-        promises.push(
-          this.lookForGUID(this.configDB.mainDB, app.removeDBSuffix(user.data.k_personID)) // Find the people doc associated with the user...
-          .then(function(peopleDoc) {
-            results.people = peopleDoc.docs[0];
-          }) // and store it when we find it
-        );
-        promises.push(
-          this.lookForPermissions(this.configDB.mainDB, userGUID) // At the same time, find the permissions docs for the user...
-          .then(function(permDocs) {
-            results.permissions = permDocs.docs; // store them...
-            return this.lookForResources(this.configDB.mainDB, permDocs.docs) // and then use them to find the resources the user can access...
-            .then(function(resourceDocs) {
-              results.resources = resourceDocs.docs;
-              results.permissions = this.filterRelations(results.permissions, results.resources, "to");
-            }.bind(this)); // and store THEM.
-          }.bind(this))
-        );
-        return Promise.all(promises);
-      }
-    }.bind(this))
-    .then(function() { // Step 3: Determine whether the user has permission to log in, and if so, send back their information
-      const thisResource = results.resources.filter(x => x.data.l_URL === origin && x.data.s_subApp === subapp);
-      if (thisResource.length === 0) {
-        return Promise.reject("No permission");
-      }
-      else if (thisResource.length > 1) {
-        return Promise.reject("More than one permission");
-      }
-      else { // If the user exists (already confirmed) and has exactly ONE permissions doc linking them to this resource, they can log in
-        const thisPermission = results.permissions.find(x => app.removeDBSuffix(x.data.k_toID) === thisResource[0]._id);
-        const DB = thisPermission.data.s_defaultDB;
-        const DBs = Object.keys(thisPermission.data.o_allowedDBs);
-
-        this.sessions[sessionKey].permissions = results.permissions;
-        this.sessions[sessionKey].resources = results.resources;
-        response2client.DB = DB;
-        response2client.DBs = DBs;
-        response2client.permissions = results.permissions;
-
-        // If a user and database were specified when logging in, and that user is the one who has logged in, send them to that database
-        if (userObj.currentGUID === results.people._id && userObj.currentDB) {
-          this.sessions[sessionKey].DB = userObj.currentDB; // Current DB
-          response2client.DB = userObj.currentDB; // Send this info back to the client as well as storing it in session
-        }
-
-        response2client.resources = results.resources.map( resource => ({ // Fill this in attribute by attribute, leaving out a_databases and o_actions, because the client doesn't need to know what permissions are possible.
-          "_id": resource._id,
-          "data": {
-            "s_name": resource.data.s_name,
-            "l_URL": resource.data.l_URL,
-            "s_subApp": resource.data.s_subApp
-          }
-        }));
-
-        if (sessionKey) {
-          this.sessions[sessionKey].resources = results.resources;
-        }
-
-        response2client.peopleDoc = results.people;
-
-        this.responseEnd(response, JSON.stringify(response2client) );
-      }
-    }.bind(this))
-    .catch( function(err) {
-      console.log(err);
-      this.responseEnd(response, err); // This is what sends the error message to the client.
-    }.bind(this));
-    */
-  }
-
 }
+
 
 
 // sessionsClass
