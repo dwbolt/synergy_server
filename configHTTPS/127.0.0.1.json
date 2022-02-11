@@ -1,0 +1,8 @@
+{
+"filePath":    "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyWeb/synergyWeb"
+,"mainDB":"etpri"
+,"subApps": {
+   "synergyData": {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyData/synergyData"}
+
+  }
+}
