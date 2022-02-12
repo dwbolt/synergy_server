@@ -1,8 +1,11 @@
 /*
 
-small web server that serves static files and is an:
+small web server that serves static files and supports an:
 
-  API into web, messages to reload config, give status, etc.
+  API into web for :
+  1) authentication
+  2) resource accessed
+  3) SPA (single page app) for accounting, messageing, clander, object database
 
 requestIn(request, response) is called for each request comming in
 
@@ -13,6 +16,19 @@ and NOT
 
 This is because app.sessions.reponseEnd keeps track of the time it took for a request to finish.
 
+Each time the server starts and new log directory is created with the name:  YYYY-MM-DD_time and the following files are created
+  requests  - loggs all the request that came into the serverStart - appended to each time a request comes in
+  resonse   - loggs a summery of the response along with the time it took to responseAddProxy  - append to each time a response ends
+  error     - loggs all the errors - appended to each time an error occers
+  summary   - every time a clean cyle happends the summary file is overwritten
+    total requests
+    total resonses
+    total not responed to
+    response time ,min, max, average
+    total size of responses sendData
+    total number of sessions
+    max number of concurrent sessions
+    number of unique users
 */
 
 //  serverClass
@@ -22,21 +38,21 @@ module.exports = class serverClass {
 //  serverClass
 constructor (s_configDir) {
   // native nodejs modules
-  this.https    = require('https');     // process https requests
+  this.https    = require('https')      ; // process https requests
   this.fsp      = require('fs/promises'); // access local file system
-  this.fs       = require('fs'); // access local file system
-  this.path     = require('path');      // used once (maybe use string function insead)
-  this.uuidv1   = require('uuid/v1');   // Generate GUIDs
-  this.config = this.loadConfiguration(s_configDir);
+  this.fs       = require('fs')         ; // access local file system
+  this.path     = require('path')       ; // used once (maybe use string function insead)
+  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
-  //this.couchConfig = this.config[this.config.couchDB];
+  this.config   = this.loadConfiguration(s_configDir);
+  this.sessions = new (require('./sessions.js'            ))(this.couchConfig, s_configDir);
 
-  // local classes
-//  this.couchDB        = new (require('./couchDB.js'             ))(this.couchConfig);
-//  this.couchdbProxy   = new (require('./couchdbProxy.js'        ))(this.couchConfig);
-//  this.couchdbNoLogin = new (require('./couchdbProxyNoLogin.js' ))(this.couchConfig, this.config);
-//  this.picServer      = new (require('./picServer.js'           ))(this.couchConfig, this.config);
-  this.sessions       = new (require('./sessions.js'            ))(this.couchConfig, s_configDir);
+  // logging
+  this.logDir;        // string for location of log file
+  this.logRequest;    // fs.writeStream
+  this.logResponse;   // fs.writeStream
+  this.logSummary;    // fs.writeStream
+  this.error;         // fs.writeStream
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -58,6 +74,39 @@ constructor (s_configDir) {
   };
 }
 
+
+//  serverClass
+async createLogFiles() {
+  // create log directory
+  try {
+    const n     =  new Date();
+    this.logDir =  app.config.logDir +"/"+ n.getUTCFullYear()  +"-"+ n.getUTCMonth()+1 +"-"+ n.getUTCDate() +"_"+
+      n.getUTCHours() +'h_'+ n.getUTCMinutes()+ "m_"+ n.getUTCSeconds() +"s"
+
+    await this.verifyPath(this.logDir);
+    this.logRequest  = this.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
+    this.logResponse = this.fs.createWriteStream(this.logDir+"/response.cvs",{flags: 'a'});
+    this.logSummary  = this.fs.createWriteStream(this.logDir+"/summary.cvs" ,{flags: 'a'});
+    this.error       = this.fs.createWriteStream(this.logDir+"/error.cvs"   ,{flags: 'a'});
+
+  } catch (e) {
+    // if there is a problem with the log file, then an error will be generated on each server request/response cycle
+    app.logError(e);
+  }
+}
+
+//  serverClass
+logSummary() {
+  // move this to the log file
+  this.error.write("logSummary");
+}
+
+
+//  serverClass
+logError(e) {
+  // move this to the log file
+  this.error.write(e);
+}
 
 //  serverClass
 //                       this is where it starts
@@ -138,7 +187,6 @@ serveFile(request, response) { // private:serve static file. could be html, JSON
         filePath = this.config.hosts[hostName].filePath + url;
       }
     }
-    console.log("Loading" + filePath);
 
   // server file
   var extname = String(this.path.extname(filePath)).toLowerCase();
@@ -180,7 +228,7 @@ web(obj, request, response) {  // private: process request
     this.sessions[obj.msg](obj, request, response);
   } else {
     // get error to user, add to server log
-    console.log("Error: server -> method 'web', message = '%s\n'", obj.msg );
+    this.logError( `"Error: server -> method 'web', message = '${obj.msg}"\n` );
   }
 }
 

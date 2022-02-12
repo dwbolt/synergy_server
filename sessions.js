@@ -45,9 +45,9 @@ constructor (
     // used for admin to see the current state of the server in real time, all data is sent client side to be viewed
     // static
     this.serverStart  = Date.now();
-    this.configDB     = configDB
 
     // requests
+    this.requests     = 0    // increment each time a request comes in
     this.openRequests = {};  // Requests that are still processing
     this.lastRequest  =  Date.now();   // see how hard server is being hit
     this.sessionKey   = 0;   // increment each time a new session is started
@@ -80,7 +80,8 @@ log(
   , response   // response ->
 ) {
 
-  console.log(`Started: Method: ${request.method}, url: ${request.url}`);
+
+
 
   // requests start here
   let sessionKey;
@@ -111,14 +112,14 @@ responseEnd(
    response  // response ->
   ,content   // content ->
 ) {
-  // make request complete not written yet (This needs punctuating, but I don't understand it well enough to try.)
+  // make request complete not written yet
   response.end(content);  // tell the client there is no more coming
   delete this.openRequests[response.harmonyRequest];  // remove from openRequest object
   const keys = response.harmonyRequest.split("-"); // key[0] is sessionKey  key[1] is reqestKey
   const obj = this.sessions[keys[0]].requests[keys[1]];
   obj.duration = Date.now() - obj.start;
 
-  console.log(`Finished: ${JSON.stringify(this.sessions[keys[0]].requests[keys[1]])}`);
+  app.logResponse.write(`${JSON.stringify(this.sessions[keys[0]].requests[keys[1]])}\n`);
 }
 
 
@@ -164,15 +165,18 @@ initSession(
 // request  ->
 // response ->
 initRequest(sessionKey, request, response) { // private, intit Request object
+  app.logRequest.write(`${++this.requests},"${request.method}","${request.url}"\n`);
   const now = Date.now();
 
-  const obj = {             // request object to store
-    start:    now,
-    lastRequest: now - this.lastRequest,
-    duration: 0,                               // will be replaced with milliseconds it took to process
-    ip:      request.connection.remoteAddress, // ip address that request came from
-    method:  request.method,                   // post, get, ...
-    url:     request.url
+  const obj = {    // request object to store
+    "sessionKey"  : sessionKey
+    ,"requestNum" : this.requests
+    ,"start"      : now
+    ,"lastRequest": now - this.lastRequest
+    ,"duration"   : 0                                // will be replaced with milliseconds it took to process
+    ,"ip"         : request.connection.remoteAddress // ip address that request came from
+    ,"method"     : request.method                   // post, get, ...
+    ,"url"        : request.url
   }
 
   this.lastRequest = now; // update to now, so we log time between now and next request
@@ -328,52 +332,6 @@ checkCookies(
 
 
 // sessionsClass
-lookForUser(
-  name       // name ->
-  ,password  // password ->
-) {
-  const obj = {
-  "path": `/${this.configDB.mainDB}/_find`, // Should ALWAYS search for login info in the main DB
-  "method": "post"}
-
-  // need to find user with given username
-  const data = {
-  "selector": {
-    "meta.s_type":     {"$eq":"user"},
-    "data.s_username": {"$eq":name},
-    "data.s_password":  {"$eq":password},
-    "$or": [
-      {"meta.d_deleted":0},
-      {"meta.d_deleted":{"$exists":false}}
-    ]
-  },
-  "limit":2}; // A limit of 2 will let us see whether there's more than 1 or not -- beyond that, we don't care how many there are
-
-  return app.couchDB.request(obj, JSON.stringify(data));
-}
-
-
-// sessionsClass
-lookForPermissions(
-   db        // db ->
-  ,userGUID // userGUID ->
-) {
-  const obj = {"path": `/${db}/_find`, "method": "post"};
-  return app.couchDB.request(obj,`{
-    "selector": {
-      "meta.s_type":     {"$eq":"permission"},
-      "data.k_fromID": {"$in":["${userGUID}", "${app.addDBSuffix(userGUID, this.configDB.mainDB)}"]},
-      "$or": [
-        {"meta.d_deleted":0},
-        {"meta.d_deleted":{"$exists":false}}
-      ]
-    },
-    "limit":99}`
-  );  // Go look for all of that user's permissions. Permission is a relation FROM a person TO a resource.
-}
-
-
-// sessionsClass
 lookForResources(
   db     // db
   ,docs  // docs
@@ -416,54 +374,6 @@ filterRelations(relations, nodes, direction) {
 lookForGUID(db, GUID) {
   const obj = {"path": `/${db}/_find`, "method": "post"};
   return app.couchDB.request(obj, `{"selector": {"_id": {"$eq": "${GUID}"}}}`);
-}
-
-
-// sessionsClass
-// requestObj
-// request
-// response
-changeProfile(requestObj, request, response) {
-  const data = requestObj.data;
-  const sessionKey = this.checkCookies(request, response);
-
-  if (sessionKey) { // If we've gotten this far, there IS a valid session
-    this.lookForUser(data.oldHandle, data.oldPW)
-    .then( function(userDoc) {
-      if (!userDoc || !userDoc.docs) responseText = "Bad response from database";
-      else if (userDoc.docs.length === 0) this.responseEnd(response, "No user");
-      else if (userDoc.docs.length > 1) this.responseEnd(response, "Multiple users");
-      else { // If a SINGLE user was found with the given name and password, we can continue
-        const GUID = userDoc.docs[0]._id;
-        const obj = {
-          "path": `/${this.configDB.mainDB}/${GUID}`,
-          "method": "put"
-        };
-
-        const sendData = JSON.parse(JSON.stringify(userDoc.docs[0]));
-        delete sendData._id;
-
-        if (data.newHandle) {
-          sendData.data.s_username = data.newHandle;
-        }
-        if (data.newPW) {
-          sendData.data.s_password = data.newPW;
-        }
-
-        app.couchDB.request(obj, JSON.stringify(sendData))
-        .then(function(result) {
-          if (result.ok === true) {
-            this.responseEnd(response, "Success");
-          }
-          else {
-            this.responseEnd(response, "Failure");
-          }
-        }.bind(this));
-      } // end else
-      this.responseEnd(response, responseText);
-    }.bind(this)); // end function
-  } // end if
-  else this.responseEnd(response, "No session");
 }
 
 
