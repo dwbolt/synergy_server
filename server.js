@@ -45,13 +45,13 @@ constructor (s_configDir) {
   this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
-  this.sessions = new (require('./sessions.js'            ))(this.couchConfig, s_configDir);
+  this.sessions;  // will hold session class
 
   // logging
   this.logDir;        // string for location of log file
   this.logRequest;    // fs.writeStream
   this.logResponse;   // fs.writeStream
-  this.logSummary;    // fs.writeStream
+  this.logSummary;    // string for location of log file
   this.error;         // fs.writeStream
 
   this.mimeTypes = {
@@ -86,8 +86,8 @@ async createLogFiles() {
     await this.verifyPath(this.logDir);
     this.logRequest  = this.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
     this.logResponse = this.fs.createWriteStream(this.logDir+"/response.cvs",{flags: 'a'});
-    this.logSummary  = this.fs.createWriteStream(this.logDir+"/summary.cvs" ,{flags: 'a'});
     this.error       = this.fs.createWriteStream(this.logDir+"/error.cvs"   ,{flags: 'a'});
+    this.logSummary  = this.logDir+"/summary.cvs" ;
 
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
@@ -95,17 +95,11 @@ async createLogFiles() {
   }
 }
 
-//  serverClass
-logSummary() {
-  // move this to the log file
-  this.error.write("logSummary");
-}
-
 
 //  serverClass
-logError(e) {
+logError(msg) {
   // move this to the log file
-  this.error.write(e);
+  this.logError.write(msg);
 }
 
 //  serverClass
@@ -148,7 +142,7 @@ loadConfiguration(s_configDir) { // private:
       console.log('loading configfile: '+ f);
       config.hosts[h]  = require(f);
     } catch (e) {
-      console.log(e);
+      this.logError(`server.js loadConfiguration  error=${e}n\`);
     } finally {
       continue;  // do next iteration even if thow/catch happens
     }
@@ -158,7 +152,7 @@ loadConfiguration(s_configDir) { // private:
 
 
 //  serverClass
-serveFile(request, response) { // private:serve static file. could be html, JSON, etc
+async serveFile(request, response) { // private:serve static file. could be html, JSON, etc
     // serve the default application
     const hostName = request.headers.host.split(":")[0];  // just want hostname, without port #
     const subApp = request.url.split("/")[1];             // get the directory or application name
@@ -192,26 +186,26 @@ serveFile(request, response) { // private:serve static file. could be html, JSON
   var extname = String(this.path.extname(filePath)).toLowerCase();
   var contentType = this.mimeTypes[extname] || 'text/html';
 
+  let content;
+  try {
+      content = await this.fsp.readFile(filePath);
+      response.setHeader('Cache-Control', 'max-age=300');
+      response.writeHead(200, { 'Content-Type': contentType });
+  } catch (e) {
+    if(e.code == 'ENOENT'){
+        // file not found
+        response.writeHead(404, { 'Content-Type': contentType });
+        content = '{message: "'+filePath+' - file not found"}';
+        this.logError(content);
+    } else {
+        // server error -- 500 is assumed, pull these from the error.()
+        response.writeHead(500);
+        content = 'Sorry, check with the site admin for error: '+e.code+' ..\n';
+        this.logError(content);
+    }
+  }
 
-  this.fs.readFile(filePath, (error, content) => {
-      if (error) {
-          // error handing need to get the html error number too,
-          if(error.code == 'ENOENT'){
-              // file not found
-              response.writeHead(404, { 'Content-Type': contentType });
-              response.end('{message: "'+filePath+' - file not found"}');
-          } else {
-              // server error -- 500 is assumed, pull these from the error.()
-              response.writeHead(500);
-              response.end('Sorry, check with the site admin for error: '+error.code+' ..\n');
-          }
-      } else {
-        // everything ok
-        response.writeHead(200, { 'Content-Type': contentType });
-        eval( "app.sessions.responseEnd(response, content)" ); // get around scope load issue
-        // responseEnd(request, response, content);
-      }
-  });
+  app.sessions.responseEnd(response, content);
 }
 
 
@@ -262,7 +256,7 @@ POST(
         break;
       default:
         // get error to user, add to server log
-        console.log("Error server = %s\n", obj.server );
+        this.logError(`Error server.js POST obj.server = ${obj.server}\n`);
     }
   });
 }
@@ -277,32 +271,6 @@ error(obj, request, response) {  // private:
   };
 
   this.couchdbProxy.request(errorObj, request, response, this.couchConfig.errorDB);
-}
-
-
-//  serverClass
-publishCalendarMonth(obj, request, response) {  // private:
-  const cookie = this.sessions.parseCookies(request);
-
-  // Verify that the request came from a current admin session
-  if (cookie.serverStart && cookie.serverStart == this.sessions.serverStart
-      && cookie.sessionKey && this.sessions.sessions[cookie.sessionKey]
-      && this.sessions.sessions[cookie.sessionKey].admin === true) {
-    this.sessions.initRequest(cookie.sessionKey, request, response);
-    response.setHeader('Access-Control-Allow-Origin', '*');
-
-    const hostName = request.headers.host.split(":")[0];
-    // Increment month by 1 to index from 1 instead of 0 (e.g., Jan = 1 and Dec = 12 instead of Jan = 0 and Dec = 11)
-    let path = `${this.config.hosts[hostName].filePath}/calendar/events_${obj.year}-${obj.month + 1}.JSON`;
-    this.fs.writeFile(path, obj.data, function(err) {
-      if(err) {
-        console.log(err);
-        this.sessions.responseEnd(response, "Failed");
-      } else {
-        this.sessions.responseEnd(response, "Succeeded");
-      }
-    }.bind(this));
-  }
 }
 
 
@@ -441,6 +409,7 @@ checkDirectory(path) {
 // obj.data ->
 // request  ->
 // response ->
+/*
 upload(obj, request, response) {
   // convert app directoruy to OS direcrtory
   const hostName = request.headers.host.split(":")[0];
@@ -465,7 +434,7 @@ upload(obj, request, response) {
     app.sessions.responseEnd(response, `Failed: ${err}`);
   }.bind(this));
 }
-
+*/
 
 // class server
 // added 2021-06-19 to save files for accounting app.
@@ -491,7 +460,7 @@ async uploadFile(obj, request, response) {
    await this.verifyPath(path) // create file path if it does not exists
    await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
   } catch (e) {
-    console.log(e);
+    this.logError(`server.js uploadFile error = ${e}\n`);
   }
 }
 
@@ -501,25 +470,27 @@ async verifyPath(path) { // public: Given a path, creates it if it doesn't alrea
   try {
     await this.fsp.mkdir(path, {recursive: true});
   } catch (e) {
-    console.log(e);
+    this.logError(`server.js verifyPath error = ${e}\n`);
   }
 }
 
 
 // class server
+/*
 callbackPromise(func, ...args) { // public: converts any callback function to a promise which resolves or rejects when the function has run
   return new Promise(function(resolve, reject) {
     func(...args, function(err) {
       if (err) {
-        console.log(err);
+        this.logError(`server.js callbackPromise error = ${err}\n`);
         reject(err);
       } else resolve();
     }); // end callback and function
   }) // end Promise
 }
-
+*/
 
 // class server
+/*
 saveEdit(obj, request, response) {
   const data = obj.data;
   const value = data.value;
@@ -547,7 +518,7 @@ saveEdit(obj, request, response) {
     this.sessions.responseEnd(response, JSON.stringify(err));
   }.bind(this));
 }
-
+*/
 
 // class server
 getDirectory(request) {

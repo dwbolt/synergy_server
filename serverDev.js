@@ -10,7 +10,7 @@ const https    = require('https');  // access to https protocal
 const fs       = require('fs');     // access to local server file system
 
 // create server class and load configuration file
-app = new (require('./server.js'))("./configDev");  // class where the work gets done
+app          = new (require('./server.js'))("./configDev");  // class where the work gets done
 
 // helper functions to get access to app object
 function requestIn(  request, response) {app.requestIn(           request, response);}
@@ -19,7 +19,9 @@ function responseEnd(request, response) {app.sessions.responseEnd(request, respo
 // server request and reponse loop
 async function startServer() {
   await app.createLogFiles();
+  app.sessions = new (require('./sessions.js'            ));   // keep track of sessions, requests and responses
 
+  // start server loop
   https.createServer(
     {
     // https certificates for encription

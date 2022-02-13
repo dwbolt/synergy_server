@@ -33,15 +33,12 @@ server logs  // used for none real time analysis
 */
 
 
-// class sessions
+// sessionsClass
 module.exports = class sessionsClass {
 
 
 // sessionsClass
-constructor (
-   configDB   // configDB -> not used now that couchDB is not used
-  ,configDir  // location of configuration directory
-) {
+constructor () {
     // used for admin to see the current state of the server in real time, all data is sent client side to be viewed
     // static
     this.serverStart  = Date.now();
@@ -51,10 +48,11 @@ constructor (
     this.openRequests = {};  // Requests that are still processing
     this.lastRequest  =  Date.now();   // see how hard server is being hit
     this.sessionKey   = 0;   // increment each time a new session is started
+    this.bytesSent    = 0;   // total bytes sent to client since the server started
 
     // open sessions
     this.sessions     = {};  // open sessions
-    this.users        =  require(`./${configDir}/users.json`);
+    this.users        =  require(`./${app.config.userDir}/users.json`);
 
     // set timer to run cleanUp every second
     setInterval(function() {
@@ -79,10 +77,6 @@ log(
     request    // request ->
   , response   // response ->
 ) {
-
-
-
-
   // requests start here
   let sessionKey;
   // get cookie
@@ -93,16 +87,17 @@ log(
   // then go straight to initRequest. If any of that ISN'T true, start a new session first.
   if (!(cookie.serverStart && cookie.serverStart == this.serverStart
         && cookie.sessionKey && this.sessions[cookie.sessionKey])) {
+          // start new session
           sessionKey = this.sessionKey++;
           this.initSession(sessionKey);
           response.setHeader('Set-Cookie', [`serverStart=${this.serverStart};path="/"`, `sessionKey=${sessionKey};path="/"`]);
-          console.log(`Setting cookie with session key ${sessionKey}`);
+          //console.log(`Setting cookie with session key ${sessionKey}`);
   } else {
     sessionKey = cookie.sessionKey;
   }
 
   this.initRequest(sessionKey, request, response);
-  response.setHeader('Access-Control-Allow-Origin', '*');       // what does this do?
+  response.setHeader('Access-Control-Allow-Origin', '*');       // dwb what does this do?
 }
 
 
@@ -110,7 +105,7 @@ log(
 // public, called to end response back to client
 responseEnd(
    response  // response ->
-  ,content   // content ->
+  ,content   // content -> what is to be sent to browser client
 ) {
   // make request complete not written yet
   response.end(content);  // tell the client there is no more coming
@@ -118,8 +113,10 @@ responseEnd(
   const keys = response.harmonyRequest.split("-"); // key[0] is sessionKey  key[1] is reqestKey
   const obj = this.sessions[keys[0]].requests[keys[1]];
   obj.duration = Date.now() - obj.start;
+  obj.bytesSent   = content.length;
+  this.bytesSent += content.length;
 
-  app.logResponse.write(`${JSON.stringify(this.sessions[keys[0]].requests[keys[1]])}\n`);
+  app.logResponse.write(`${JSON.stringify( obj )}\n`);
 }
 
 
@@ -199,7 +196,7 @@ responseAddProxy(response, proxObj) {
 
 // sessionsClass
 // private - called every second to get rid of inactive sessions
-cleanUp() {
+async cleanUp() {
   // see if any sessions need to be culled
   for (let sess in this.sessions) { // Go through all existing sessions
     const session = this.sessions[sess];
@@ -216,6 +213,18 @@ cleanUp() {
       delete this.sessions[sess];
     }
   }
+
+  // overwrite state of server to logfile
+  const content = `{
+ "serverStart": ${this.serverStart}
+,"serverUpHr" : ${(new Date()-this.serverStart)/(1000*60*60)}
+,"MBSent"  : ${this.bytesSent/1000000}
+,"requests"   : ${this.requests}
+,"sessionsTotal" : ${this.sessionKey}
+,"sesstionsActive" : ${Object.keys(this.sessions).length}
+}`
+
+  await  app.fsp.writeFile(app.logSummary,content);
 }
 
 
@@ -233,7 +242,7 @@ parseCookies (
   }
 
   if (rc && rc.split(';').length > 2) {
-    console.log("Problem");
+    app.logError(`sessions.js parseCookies error`);
   }
 
   rc && rc.split(';').forEach(function( cookie ) {
@@ -323,7 +332,7 @@ checkCookies(
     sessionKey = cookie.sessionKey;
   } else {
     // If there is no valid session, can't go any farther - just report the error
-    console.log("Error: No valid session running, could not log in");
+    app.logError("Error: No valid session running, could not log in");
     this.responseEnd(response, "No session"); // Send the phrase "No session" back to the client
   }
 
@@ -383,7 +392,6 @@ lookForGUID(db, GUID) {
 // response ->
 logout(obj, request, response) {
   response.setHeader('Set-Cookie', [`serverStart="";Max-Age=0;path="/"`, `sessionKey="";Max-Age=0;path="/"`]);
-  console.log("Removing session key and server start headers");
   this.responseEnd(response, "Logged Out");
 }
 
