@@ -52,7 +52,7 @@ constructor () {
 
     // open sessions
     this.sessions     = {};  // open sessions
-    this.users        =  require(`./${app.config.userDir}/users.json`);
+    this.users        =  require(`${app.config.userDir}/users.json`);
 
     // set timer to run cleanUp every second
     setInterval(function() {
