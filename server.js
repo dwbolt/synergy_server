@@ -99,7 +99,7 @@ async createLogFiles() {
 //  serverClass
 logError(msg) {
   // move this to the log file
-  this.logError.write(msg);
+  this.error.write(msg);
 }
 
 //  serverClass
