@@ -130,7 +130,7 @@ requestIn(request, response) {  // public: requests start here
 //  serverClass
 loadConfiguration(s_configDir) { // private:
   // configuration file
-  const config  = require(`${s_configDir}/_config.json`);   // ports, domains served, etc on server
+  const config  = require(`./${s_configDir}/_config.json`);   // ports, domains served, etc on server
   config.maxSessionAge.totalMilliSec = 0;
   if (config.maxSessionAge.minutes) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.minutes * 60 * 1000;}
   if (config.maxSessionAge.seconds) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.seconds * 1000;}
