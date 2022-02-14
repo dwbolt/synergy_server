@@ -143,8 +143,6 @@ loadConfiguration(s_configDir) { // private:
       config.hosts[h]  = require(f);
     } catch (e) {
       this.logError(`server.js loadConfiguration  error=${e}\n`);
-    } finally {
-      continue;  // do next iteration even if thow/catch happens
     }
   }
   return config;
