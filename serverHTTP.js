@@ -1,20 +1,32 @@
 /*
 
-small web server that serves static files
+small web server that serves static files and a
+API to webserver
 
 */
 
 // built in nodejs modules
-http    = require('http');  // access to https protocal
+const http    = require('http');  // access to http protocal
+const fs       = require('fs');     // access to local server file system
 
-app = new (require('./server.js'))("./configHTTP");  // class where the work gets done
+// create server class and load configuration file
+app       = new (require('./server.js'))("./configHTTP");  // class where the work gets done
 
-// helper function to get access to app object
-function requestIn(request, response) {
-  app.requestIn(request, response)
-}
+// helper functions to get access to app object
+function requestIn(  request, response) {app.requestIn(           request, response);}
+function responseEnd(request, response) {app.sessions.responseEnd(request, response);}
 
 // server request and reponse loop
-http.createServer(requestIn).listen(app.config.port);
+async function startServer() {
+  await app.createLogFiles();
+  app.logError("test error log")
+  app.sessions = new (require('./sessions.js'            ));   // keep track of sessions, requests and responses
 
-console.log(`https:// Server using port: ${app.config.port}`);
+  // start server loop
+  http.createServer(requestIn).listen(app.config.port);
+
+  //
+  console.log(`http:// Server using port: ${app.config.port}`);
+}
+
+startServer();
