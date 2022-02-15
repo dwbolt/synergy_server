@@ -19,7 +19,7 @@ function responseEnd(request, response) {app.sessions.responseEnd(request, respo
 // server request and reponse loop
 async function startServer() {
   await app.createLogFiles();
-  app.logError("test error log")
+  app.logError("function startServer - test error log")
   app.sessions = new (require('./sessions.js'            ));   // keep track of sessions, requests and responses
 
   // start server loop

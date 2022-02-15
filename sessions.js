@@ -332,7 +332,7 @@ checkCookies(
     sessionKey = cookie.sessionKey;
   } else {
     // If there is no valid session, can't go any farther - just report the error
-    app.logError("Error: No valid session running, could not log in");
+    app.logError("sessionsClass.checkCookies Error: No valid session running, could not log in");
     this.responseEnd(response, "No session"); // Send the phrase "No session" back to the client
   }
 

@@ -91,7 +91,7 @@ async createLogFiles() {
 
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
-    app.logError(e);
+    app.logError("serverClass.createLogFiles err="+e);
   }
 }
 
@@ -99,7 +99,7 @@ async createLogFiles() {
 //  serverClass
 logError(msg) {
   // move this to the log file
-  this.error.write(msg);
+  this.error.write(msg+'\n');
 }
 
 //  serverClass
