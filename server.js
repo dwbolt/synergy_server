@@ -193,12 +193,12 @@ async serveFile(request, response) { // private:serve static file. could be html
     if(e.code == 'ENOENT'){
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
-        content = 'filePath+' - file not found"}';
+        content = `${filePath} - file not found`;
         this.logError(content);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
-        content = 'Sorry, check with the site admin for error: '+e.code+' ..\n';
+        content = 'Sorry, check with the site admin for error: ' +e.code+ '\n';
         this.logError(content);
     }
   }

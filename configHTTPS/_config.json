@@ -4,6 +4,6 @@
 ,"maxSessionAge" : {"minutes": 60, "seconds": 10}
 
 ,"logDir" : "../../logs/HTTPS"
-,"userDir": "../../users"
+,"userDir": "../../synergyUsers/synergyUsers"
 ,"CacheControl": "max-age=0"
 }
