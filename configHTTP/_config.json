@@ -5,4 +5,5 @@
 
 ,"logDir" : "../../logs/HTTP"
 ,"userDir": "../../users"
+,"CacheControl": "max-age=0"
 }
