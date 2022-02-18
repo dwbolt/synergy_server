@@ -80,8 +80,7 @@ async createLogFiles() {
   // create log directory
   try {
     const n     =  new Date();
-    this.logDir =  app.config.logDir +"/"+ n.getUTCFullYear()  +"-"+ n.getUTCMonth()+1 +"-"+ n.getUTCDate() +"_"+
-      n.getUTCHours() +'h_'+ n.getUTCMinutes()+ "m_"+ n.getUTCSeconds() +"s"
+    this.logDir =  app.config.logDir +"/"+ n.toISOString();
 
     await this.verifyPath(this.logDir);
     this.logRequest  = this.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
@@ -187,18 +186,19 @@ async serveFile(request, response) { // private:serve static file. could be html
   let content;
   try {
       content = await this.fsp.readFile(filePath);
-      response.setHeader('Cache-Control', 'max-age=300');
+    //  response.setHeader('Cache-Control', 'max-age=300');
+      response.setHeader('Cache-Control', `${app.config.CacheControl}`);
       response.writeHead(200, { 'Content-Type': contentType });
   } catch (e) {
     if(e.code == 'ENOENT'){
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
-        content = '{message: "'+filePath+' - file not found"}';
+        content = `${filePath} - file not found`;
         this.logError(content);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
-        content = 'Sorry, check with the site admin for error: '+e.code+' ..\n';
+        content = 'Sorry, check with the site admin for error: ' +e.code+ '\n';
         this.logError(content);
     }
   }

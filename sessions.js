@@ -33,26 +33,28 @@ server logs  // used for none real time analysis
 */
 
 
-// sessionsClass
+// sessionsClass - server-side
 module.exports = class sessionsClass {
 
 
-// sessionsClass
+// sessionsClass - server-side
 constructor () {
-    // used for admin to see the current state of the server in real time, all data is sent client side to be viewed
+    // used to see current state of the server in real time . the logfile logSummary is overwritten every cleanUp cycle
     // static
     this.serverStart  = Date.now();
+
+    // load user autentication data
+    this.users        = require(`${app.config.userDir}/users.json`);
 
     // requests
     this.requests     = 0    // increment each time a request comes in
     this.openRequests = {};  // Requests that are still processing
     this.lastRequest  =  Date.now();   // see how hard server is being hit
     this.sessionKey   = 0;   // increment each time a new session is started
-    this.bytesSent    = 0;   // total bytes sent to client since the server started
+    this.bytesSent    = 0;   // total bytes sent to clients since server started
 
     // open sessions
     this.sessions     = {};  // open sessions
-    this.users        =  require(`${app.config.userDir}/users.json`);
 
     // set timer to run cleanUp every second
     setInterval(function() {
@@ -61,7 +63,7 @@ constructor () {
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 getSessionData(
   obj        // obj ->
   ,request   // request ->
@@ -71,7 +73,7 @@ getSessionData(
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 // public, called from server.js when server request first comes in
 log(
     request    // request ->
@@ -91,17 +93,17 @@ log(
           sessionKey = this.sessionKey++;
           this.initSession(sessionKey);
           response.setHeader('Set-Cookie', [`serverStart=${this.serverStart};path="/"`, `sessionKey=${sessionKey};path="/"`]);
-          //console.log(`Setting cookie with session key ${sessionKey}`);
   } else {
+    // session key is valid
     sessionKey = cookie.sessionKey;
   }
 
   this.initRequest(sessionKey, request, response);
-  response.setHeader('Access-Control-Allow-Origin', '*');       // dwb what does this do?
+  response.setHeader('Access-Control-Allow-Origin', '*');       // 2022-02-17dwb what does this do?
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 // public, called to end response back to client
 responseEnd(
    response  // response ->
@@ -120,28 +122,46 @@ responseEnd(
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 // public, used to login from html page
 login(
-  userObj    // userObj ->
-  ,request   // request ->
-  ,response  // response ->
+   clientMsg // message from client
+  ,request   // HTTPS request
+  ,response  // HTTPS response
 ){
+  const user = clientMsg.user;
 
-  //const sessionKey = this.checkCookies(request, response);
-  const user = userObj.user;
-  const pwd  = userObj.pwd;
-
-  if (this.users[user] && this.users[user].loginPwd === pwd) {
-    this.responseEnd(response,'{"msg":true}');
+  if (this.users[user] && this.users[user].pwdDigest === clientMsg.pwdDigest) {
+    this.responseEnd(response,`{"msg":true, "nameFirst":"${this.users[user].nameFirst}", "nameLast":"${this.users[user].nameLast}"}`);
+    // store user with their session
+    // to be done
   } else {
     this.responseEnd(response,'{"msg":false}');
   }
 }
 
+// sessionsClass - server-side
+logout(
+   clientMsg // message from client
+  ,request   // HTTPS request
+  ,response  // HTTPS response
+) {
+  const user = userObj.user;
 
+  // make sure user is logged into this sessions
+  // to be done
 
-// sessionsClass
+  // remove user from their session
+  // to be done
+  this.responseEnd(response,`{"msg":true}`);
+
+/*
+  response.setHeader('Set-Cookie', [`serverStart="";Max-Age=0;path="/"`, `sessionKey="";Max-Age=0;path="/"`]);
+  this.responseEnd(response, "Logged Out");
+*/
+}
+
+// sessionsClass - server-side
 // private, init Session object
 initSession(
   sessionKey  // sessionKey ->
@@ -150,14 +170,16 @@ initSession(
   const s = this.sessions[sessionKey];
 
   s.userName    = "";  // userName if this is a logged in session
+  /*  dwb 2022-02-17
   s.permissions = [];  // permission this session has - array of objects each representing permissions for one resource
   s.DB          = "";  // Name of the user's current database
   s.DBs         = [];  // List of all databases the user can access
+  */
   s.requests    = [];  // requests made from this session
 }
 
 
-// class sessions
+// sessionsClass - server-side
 // sessionKey ->
 // request  ->
 // response ->
@@ -185,7 +207,7 @@ initRequest(sessionKey, request, response) { // private, intit Request object
 }
 
 
-// class sessions
+// sessionsClass - server-side
 // response ->
 // proxObj ->
 responseAddProxy(response, proxObj) {
@@ -194,8 +216,9 @@ responseAddProxy(response, proxObj) {
 }
 
 
-// sessionsClass
-// private - called every second to get rid of inactive sessions
+// 2022-02-17 potental bug, not sure what happens if cleanUp takes longer than a second to run say durring a garbage collection
+// sessionsClass - server-side
+// private - called every second to get rid of inactive sessions and requests
 async cleanUp() {
   // see if any sessions need to be culled
   for (let sess in this.sessions) { // Go through all existing sessions
@@ -216,19 +239,19 @@ async cleanUp() {
 
   // overwrite state of server to logfile
   const content = `{
- "serverStart": ${this.serverStart}
-,"serverUpHr" : ${(new Date()-this.serverStart)/(1000*60*60)}
-,"MBSent"  : ${this.bytesSent/1000000}
-,"requests"   : ${this.requests}
-,"sessionsTotal" : ${this.sessionKey}
+ "serverStart"     : ${this.serverStart}
+,"serverUpHr"      : ${(new Date()-this.serverStart)/(1000*60*60)}
+,"MBSent"          : ${this.bytesSent/1000000}
+,"requests"        : ${this.requests}
+,"sessionsTotal"   : ${this.sessionKey}
 ,"sesstionsActive" : ${Object.keys(this.sessions).length}
 }`
 
-  await  app.fsp.writeFile(app.logSummary,content);
+  await app.fsp.writeFile(app.logSummary,content);
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 // private, put cookies in an object so that they can be accessed easily
 parseCookies (
   request  // request ->
@@ -257,7 +280,7 @@ parseCookies (
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 parseSetCookies(
   response // response ->
 ) {
@@ -282,8 +305,9 @@ parseSetCookies(
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 // ?? used to login from html page
+/* dwb 2022-02-17
 authorizedSubApp(
    subApp    // subApp
   ,request   // request ->
@@ -313,9 +337,9 @@ authorizedSubApp(
    return true;
  }
 }
+*/
 
-
-// sessionsClass
+// sessionsClass - server-side
 checkCookies(
    request   // request
   ,response  // response
@@ -339,8 +363,9 @@ checkCookies(
   return sessionKey;
 }
 
+/* dwb 2022-02-17
+// sessionsClass - server-side
 
-// sessionsClass
 lookForResources(
   db     // db
   ,docs  // docs
@@ -366,8 +391,10 @@ lookForResources(
   return app.couchDB.request(obj, JSON.stringify(selector));  // Go look for all of that user's permissions. Permission is a relation FROM a person TO a resource.
 }
 
+*/
 
-// sessionsClass
+
+// sessionsClass - server-side
 // relations  ->
 // nodes ->
 // direction ->
@@ -377,24 +404,17 @@ filterRelations(relations, nodes, direction) {
 }
 
 
-// sessionsClass
+// sessionsClass - server-side
 // db
 // GUID
+/* dwb 2022-02-17
 lookForGUID(db, GUID) {
   const obj = {"path": `/${db}/_find`, "method": "post"};
   return app.couchDB.request(obj, `{"selector": {"_id": {"$eq": "${GUID}"}}}`);
 }
+*/
 
 
-// sessionsClass
-// obj ->
-// request ->
-// response ->
-logout(obj, request, response) {
-  response.setHeader('Set-Cookie', [`serverStart="";Max-Age=0;path="/"`, `sessionKey="";Max-Age=0;path="/"`]);
-  this.responseEnd(response, "Logged Out");
-}
 
-
-// sessionsClass
+// sessionsClass - server-side
 } //////// end
