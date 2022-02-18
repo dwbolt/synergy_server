@@ -42,14 +42,16 @@ constructor () {
     // used to see current state of the server in real time . the logfile logSummary is overwritten every cleanUp cycle
     // static
     this.serverStart  = Date.now();
-    this.users        = require(`${app.config.userDir}/users.json`);   // load user autentication data
+
+    // load user autentication data
+    this.users        = require(`${app.config.userDir}/users.json`);
 
     // requests
     this.requests     = 0    // increment each time a request comes in
     this.openRequests = {};  // Requests that are still processing
     this.lastRequest  =  Date.now();   // see how hard server is being hit
     this.sessionKey   = 0;   // increment each time a new session is started
-    this.bytesSent    = 0;   // total bytes sent to client since server started
+    this.bytesSent    = 0;   // total bytes sent to clients since server started
 
     // open sessions
     this.sessions     = {};  // open sessions
@@ -123,22 +125,41 @@ responseEnd(
 // sessionsClass - server-side
 // public, used to login from html page
 login(
-  userObj    // userObj ->
-  ,request   // request ->
-  ,response  // response ->
+   clientMsg // message from client
+  ,request   // HTTPS request
+  ,response  // HTTPS response
 ){
+  const user = clientMsg.user;
 
-  //const sessionKey = this.checkCookies(request, response);
-  const user       = userObj.user;
-
-  if (this.users[user] && this.users[user].pwdDigest === userObj.pwdDigest) {
-    this.responseEnd(response,'{"msg":true}');
+  if (this.users[user] && this.users[user].pwdDigest === clientMsg.pwdDigest) {
+    this.responseEnd(response,`{"msg":true, "nameFirst":"${this.users[user].nameFirst}", "nameLast":"${this.users[user].nameLast}"}`);
+    // store user with their session
+    // to be done
   } else {
     this.responseEnd(response,'{"msg":false}');
   }
 }
 
+// sessionsClass - server-side
+logout(
+   clientMsg // message from client
+  ,request   // HTTPS request
+  ,response  // HTTPS response
+) {
+  const user = userObj.user;
 
+  // make sure user is logged into this sessions
+  // to be done
+
+  // remove user from their session
+  // to be done
+  this.responseEnd(response,`{"msg":true}`);
+
+/*
+  response.setHeader('Set-Cookie', [`serverStart="";Max-Age=0;path="/"`, `sessionKey="";Max-Age=0;path="/"`]);
+  this.responseEnd(response, "Logged Out");
+*/
+}
 
 // sessionsClass - server-side
 // private, init Session object
@@ -393,15 +414,6 @@ lookForGUID(db, GUID) {
 }
 */
 
-
-// sessionsClass - server-side
-// obj ->
-// request ->
-// response ->
-logout(obj, request, response) {
-  response.setHeader('Set-Cookie', [`serverStart="";Max-Age=0;path="/"`, `sessionKey="";Max-Age=0;path="/"`]);
-  this.responseEnd(response, "Logged Out");
-}
 
 
 // sessionsClass - server-side
