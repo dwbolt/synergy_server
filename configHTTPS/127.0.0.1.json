@@ -1,6 +1,6 @@
 {
-"filePath":                     "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyWeb/synergyWeb"
+"filePath":                     "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/Web"
 ,"subApps": {
-   "synergyData":  {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/synergyData/synergyData"}
+   "synergyData":  {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/Data"}
   }
 }

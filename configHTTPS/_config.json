@@ -3,7 +3,7 @@
 ,"hosts"         :  {"127.0.0.1": "load"}
 ,"maxSessionAge" : {"minutes": 60, "seconds": 10}
 
-,"logDir" : "../../logs/HTTPS"
-,"userDir": "../../synergyUsers/synergyUsers"
+,"logDir" : "../z-logs/HTTPS"
+,"userDir": "../Users"
 ,"CacheControl": "max-age=0"
 }
