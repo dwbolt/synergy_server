@@ -156,28 +156,28 @@ async serveFile(request, response) { // private:serve static file. could be html
     const subAppConfig = this.config.hosts[hostName].subApps[ subApp ];  // try to get config for an application
     let filePath;
 
+    // create file ref from url
     let url = request.url;
     if (url.indexOf('?') > -1) {
-      url = url.slice(0,url.indexOf('?')); // If there's a question mark, remove it and anything after it
+      // remove any parametes on url
+      url = url.slice(0,url.indexOf('?'));
+    }
+    if (url[url.length-1] === "/") {
+      // add default html file if only a directory is given
+      url += "app.html"
     }
 
+    // find root server path
     if (subAppConfig) {
-      // use subApps direcrtory
-      if (subApp.length +2 == url.length ) {
-        filePath = subAppConfig.filePath + "/app.html";
-      } else {
-        filePath = subAppConfig.filePath + url.substr(subApp.length+1);
-      }
-      // assume it requires login
-      // if (! this.sessions.authorizedSubApp(subApp, request, response) ) return;  //
+        filePath = subAppConfig.filePath;
+        // take of subApp part of url
+        url = url.substr(subApp.length+1);
     } else {
-      // use domain directory
-      if (url === "/") {
-        filePath = this.config.hosts[hostName].filePath +"/app.html" ;
-      } else {
-        filePath = this.config.hosts[hostName].filePath + url;
-      }
+        filePath = this.config.hosts[hostName].filePath;
     }
+
+    // complete server path to file
+    filePath += url;
 
   // server file
   var extname = String(this.path.extname(filePath)).toLowerCase();
