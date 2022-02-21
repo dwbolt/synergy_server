@@ -74,6 +74,14 @@ getSessionData(
 
 
 // sessionsClass - server-side
+getUserData(
+  user  = "${user}"
+  ,path  = "${path}"
+){
+
+}
+
+// sessionsClass - server-side
 // public, called from server.js when server request first comes in
 log(
     request    // request ->

@@ -1,7 +1,7 @@
 {
-"filePath":                     "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/Web"
+"filePath":                     "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/web"
 ,"subApps": {
-   "synergyData":  {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/Data"}
-   ,"users":       {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/Users"}
+   "synergyData":  {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/data"}
+   ,"users":       {"filePath": "/Users/davidbolt/1-topics/H/Harmony/4-Webs/1-local/users"}
   }
 }
