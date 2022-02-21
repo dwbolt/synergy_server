@@ -239,19 +239,20 @@ POST(
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
     try {
-          var obj = JSON.parse(body);
+      var obj = JSON.parse(body);
     } catch (e) {
-      alert(e);
+        this.logError(`Error server.js- JSON.parse = ${obj.server}\n`);
       return;
     }
 
     switch (obj.server) {
        case "web":
-        this.web(                obj, request, response);
+        this.web(obj, request, response);
         break;
+        /*
       case "pic":
         this.picServer.requestIn(obj, request, response);
-        break;
+        break;*/
       default:
         // get error to user, add to server log
         this.logError(`Error server.js POST obj.server = ${obj.server}\n`);
