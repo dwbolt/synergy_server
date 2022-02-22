@@ -1,9 +1,0 @@
-{
-"port": 443
-,"hosts"         :  {"127.0.0.1": "load"}
-,"maxSessionAge" : {"minutes": 60, "seconds": 10}
-
-,"logDir" : "../z-logs/HTTPS"
-,"userDir": "../users"
-,"CacheControl": "max-age=0"
-}

@@ -97,15 +97,16 @@ async createLogFiles() {
 
 //  serverClass
 logError(msg) {
-  // move this to the log file
+  // append message to log file
   this.error.write(msg+'\n');
 }
 
 //  serverClass
-//                       this is where it starts
-// request ->
-// response ->
-requestIn(request, response) {  // public: requests start here
+//  public: requests start here
+requestIn(
+   request
+  ,response
+) {
   this.sessions.log(request, response);   // log request in memory and in log files. Also add cookies for sessionKey and serverStart to response
 
   // make sure configuration file for web is loaded
@@ -122,6 +123,7 @@ requestIn(request, response) {  // public: requests start here
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
     response.end(`configuration file: ${host}.json not found`);
+    this.logError(`configuration file: ${host}.json not found`);
   }
 }
 
@@ -141,7 +143,7 @@ loadConfiguration(s_configDir) { // private:
       console.log('loading configfile: '+ f);
       config.hosts[h]  = require(f);
     } catch (e) {
-      this.logError(`server.js loadConfiguration  error=${e}\n`);
+      this.logError(`server.js loadConfiguration  error=${e}`);
     }
   }
   return config;
@@ -198,7 +200,7 @@ async serveFile(request, response) { // private:serve static file. could be html
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
-        content = 'Sorry, check with the site admin for error: ' +e.code+ '\n';
+        content = 'Sorry, check with the site admin for error: ' +e.code;
         this.logError(content);
     }
   }
@@ -220,7 +222,7 @@ web(obj, request, response) {  // private: process request
     this.sessions[obj.msg](obj, request, response);
   } else {
     // get error to user, add to server log
-    this.logError( `"Error: server -> method 'web', message = '${obj.msg}"\n` );
+    this.logError( `"Error: server -> method 'web', message = '${obj.msg}"` );
   }
 }
 
@@ -241,7 +243,7 @@ POST(
     try {
       var obj = JSON.parse(body);
     } catch (e) {
-        this.logError(`Error server.js- JSON.parse = ${obj.server}\n`);
+        this.logError(`Error server.js- JSON.parse = ${obj.server}`);
       return;
     }
 
@@ -255,7 +257,7 @@ POST(
         break;*/
       default:
         // get error to user, add to server log
-        this.logError(`Error server.js POST obj.server = ${obj.server}\n`);
+        this.logError(`Error server.js POST obj.server = ${obj.server}`);
     }
   });
 }
@@ -274,6 +276,7 @@ error(obj, request, response) {  // private:
 
 
 //  serverClass
+/*
 replicate(requestObj, request, response) { // private:
   const cookie = this.sessions.parseCookies(request);
 
@@ -348,6 +351,7 @@ replicate(requestObj, request, response) { // private:
     response.end("Not Logged In");
   }
 }
+*/
 
 
 //  serverClass
@@ -388,7 +392,59 @@ getFileNames(obj, request, response) {
 }
 
 
+
+
+
+
+
+// class server
+// added 2021-06-19 to save files for accounting app.
+
+// obj      ->  message
+// obj.path ->
+// obj.name ->
+// obj.extension ->
+// obj.data ->
+// request  ->
+// response
+async uploadFile(
+  obj
+  , request
+  , response) {
+  const hostName     = request.headers.host.split(":")[0];
+  const subAppConfig = this.config.hosts[hostName].subApps[ obj.virDir ];  // try to get config for an application
+  let directory      = `${this.config.hosts[hostName].filePath}`;
+  if (subAppConfig) {
+    directory = `${subAppConfig.filePath}`;
+  }
+
+  const path = `${directory}/${obj.app}/${obj.dir}`;
+
+  try {
+   await this.verifyPath(path) // create file path if it does not exists
+   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
+  } catch (e) {
+    this.logError(`server.js uploadFile error = ${e}`);
+  }
+}
+
+
+// class server
+// public: Given a path, creates it if it doesn't already exists, and returns a promise that resolves when finished.
+// used to create logs, etc...
+async verifyPath(
+  path  // string of path to create/verify
+) {
+  try {
+    await this.fsp.mkdir(path, {recursive: true});
+  } catch (e) {
+    this.logError(`server.js verifyPath error = ${e}`);
+  }
+}
+
+
 //  serverClass
+/*
 checkDirectory(path) {
   const steps = path.split("/");
   let partialPath = steps[0];
@@ -400,6 +456,7 @@ checkDirectory(path) {
     }
   }.bind(this));
 }
+*/
 
 
 // class server
@@ -436,51 +493,12 @@ upload(obj, request, response) {
 */
 
 // class server
-// added 2021-06-19 to save files for accounting app.
-
-// obj      ->  message
-// obj.path ->
-// obj.name ->
-// obj.extension ->
-// obj.data ->
-// request  ->
-// response
-async uploadFile(obj, request, response) {
-  const hostName     = request.headers.host.split(":")[0];
-  const subAppConfig = this.config.hosts[hostName].subApps[ obj.virDir ];  // try to get config for an application
-  let directory      = `${this.config.hosts[hostName].filePath}`;
-  if (subAppConfig) {
-    directory = `${subAppConfig.filePath}`;
-  }
-
-  const path = `${directory}/${obj.app}/${obj.dir}`;
-
-  try {
-   await this.verifyPath(path) // create file path if it does not exists
-   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
-  } catch (e) {
-    this.logError(`server.js uploadFile error = ${e}\n`);
-  }
-}
-
-
-// class server
-async verifyPath(path) { // public: Given a path, creates it if it doesn't already exists, and returns a promise that resolves when finished.
-  try {
-    await this.fsp.mkdir(path, {recursive: true});
-  } catch (e) {
-    this.logError(`server.js verifyPath error = ${e}\n`);
-  }
-}
-
-
-// class server
 /*
 callbackPromise(func, ...args) { // public: converts any callback function to a promise which resolves or rejects when the function has run
   return new Promise(function(resolve, reject) {
     func(...args, function(err) {
       if (err) {
-        this.logError(`server.js callbackPromise error = ${err}\n`);
+        this.logError(`server.js callbackPromise error = ${err}`);
         reject(err);
       } else resolve();
     }); // end callback and function
@@ -520,6 +538,7 @@ saveEdit(obj, request, response) {
 */
 
 // class server
+/*
 getDirectory(request) {
   const hostName = request.headers.host.split(":")[0];
   const subApp = request.url.split("/")[1];             // get the directory or application name
@@ -530,9 +549,10 @@ getDirectory(request) {
   }
   return directory;
 }
-
+*/
 
 // class server
+/*
 removeDBSuffix (idString) {
 	let newID = idString;
 	if (typeof idString === "string") {
@@ -545,9 +565,10 @@ removeDBSuffix (idString) {
 
 	return newID;
 }
-
+*/
 
 //  serverClass
+/*
 addDBSuffix (idString, DB) {
 	if (!DB) DB = this.login.DB;
 
@@ -557,7 +578,7 @@ addDBSuffix (idString, DB) {
   }
 	return newID;
 }
-
+*/
 
 //  serverClass
 } //////// end of class
