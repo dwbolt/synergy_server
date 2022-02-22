@@ -10,7 +10,7 @@ const https    = require('https');  // access to https protocal
 const fs       = require('fs');     // access to local server file system
 
 // create server class and load configuration file
-app       = new (require('./server.js'))("../config/HTTPS");  // class where the work gets done
+app       = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
 
 // helper functions to get access to app object
 function requestIn(  request, response) {app.requestIn(           request, response);}

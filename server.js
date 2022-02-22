@@ -143,7 +143,8 @@ loadConfiguration(s_configDir) { // private:
       console.log('loading configfile: '+ f);
       config.hosts[h]  = require(f);
     } catch (e) {
-      this.logError(`server.js loadConfiguration  error=${e}`);
+      // con not use logError, the directory to put the error log is located in the the configuration file, and loading it is where the error is.
+      console.log(`server.js loadConfiguration  error=${e}`);
     }
   }
   return config;
