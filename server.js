@@ -18,7 +18,7 @@ This is because app.sessions.reponseEnd keeps track of the time it took for a re
 
 Each time the server starts and new log directory is created with the name:  YYYY-MM-DD_time and the following files are created
   requests  - loggs all the request that came into the serverStart - appended to each time a request comes in
-  resonse   - loggs a summery of the response along with the time it took to responseAddProxy  - append to each time a response ends
+  resonse   - loggs a summery of the response along with the time it took to - append to each time a response ends
   error     - loggs all the errors - appended to each time an error occers
   summary   - every time a clean cyle happends the summary file is overwritten
     total requests
@@ -277,85 +277,6 @@ error(obj, request, response) {  // private:
 
 
 //  serverClass
-/*
-replicate(requestObj, request, response) { // private:
-  const cookie = this.sessions.parseCookies(request);
-
-  if (cookie.serverStart && cookie.serverStart == this.sessions.serverStart
-      && cookie.sessionKey && this.sessions.sessions[cookie.sessionKey]) {
-
-      this.sessions.initRequest(cookie.sessionKey, request, response);
-      response.setHeader('Access-Control-Allow-Origin', '*');
-
-      const obj = {
-      "path": `/${this.config[this.config.couchDB].replicateDB}`,
-      "method":   "post"}
-
-      const protocol = this.config[this.config.couchDB].protocol;
-      const host = this.config[this.config.couchDB].host;
-      const port = this.config[this.config.couchDB].port;
-      let portText = "";
-      if (port) portText = `:${port}`;
-
-      const url = `${protocol}//${host}${portText}`;
-      const auth = this.config[this.config.couchDB].auth.split(":");
-      let username = null;
-      let password = "";
-      if (auth.length > 1) {
-        username = auth[0];
-        password = auth[1];
-      }
-
-      const data = {
-        "_id":this.uuidv1(),
-        "user_ctx": {
-          "name": username,
-          "roles": [
-            "_replicator",
-            "_reader",
-            "_writer"
-          ]
-        },
-        "source": {
-          "url": `${url}/${requestObj.from}`,
-          "headers": {
-          }
-        },
-        "target": {
-          "url": `${url}/${requestObj.to}`,
-          "headers": {
-          }
-        },
-        "create_target": false,
-        "continuous": false,
-        "owner":username
-      };
-
-      if (requestObj.IDs) {
-        data.doc_ids = requestObj.IDs;
-      }
-
-      if (requestObj.selector) {
-        data.selector = requestObj.selector;
-      }
-
-      if (username && password) {
-        data.source.headers.Authorization = "Basic " + Buffer(`${username}:${password}`).toString('base64');
-        data.target.headers.Authorization = "Basic " + Buffer(`${username}:${password}`).toString('base64');
-      }
-
-      app.couchDB.request(obj, JSON.stringify(data))
-      .then(function(answer) {
-        this.sessions.responseEnd(response, JSON.stringify(answer));
-      }.bind(this));
-  } else {
-    response.end("Not Logged In");
-  }
-}
-*/
-
-
-//  serverClass
 getFromHarmonyByID(obj, request, response) { // private:
   const IDs = obj.IDs;
   const cookie = this.sessions.parseCookies(request);
@@ -391,10 +312,6 @@ getFileNames(obj, request, response) {
   const fileNames = this.fs.readdirSync(path);
   this.sessions.responseEnd(response, JSON.stringify(fileNames));
 }
-
-
-
-
 
 
 
@@ -443,143 +360,6 @@ async verifyPath(
   }
 }
 
-
-//  serverClass
-/*
-checkDirectory(path) {
-  const steps = path.split("/");
-  let partialPath = steps[0];
-  steps.splice(0, 1);
-  steps.forEach(function(step) {
-    partialPath += `/${step}`;
-    if (!this.fs.existsSync(partialPath)) {
-      this.fs.mkdirSync(partialPath);
-    }
-  }.bind(this));
-}
-*/
-
-
-// class server
-// obj      ->
-// obj.path ->
-// obj.data ->
-// request  ->
-// response ->
-/*
-upload(obj, request, response) {
-  // convert app directoruy to OS direcrtory
-  const hostName = request.headers.host.split(":")[0];
-  const subApp = obj.path.split("/")[1];             // get the directory or application name
-  const subAppConfig = this.config.hosts[hostName].subApps[ subApp ];  // try to get config for an application
-  let directory = `${this.config.hosts[hostName].filePath}`;
-  if (subAppConfig) {
-    directory = `${subAppConfig.filePath}`;
-  }
-
-  const path = `${directory}/${obj.path}/${obj.name}.${obj.extension}`;
-
-  let fileBinaryArray = [];
-  Object.keys(obj.data).map(function(key){
-    fileBinaryArray[key] = obj.data[key];
-  });
-
-  this.verifyPath(`${directory}/${obj.path}`) // Make sure the file path exists
-  .then(this.callbackPromise.bind(this, app.fs.writeFile, path, Buffer.from(fileBinaryArray))) // save the file using app.fs.writeFile
-  .then(app.sessions.responseEnd.bind(this, response, "Succeeded")) // Report success to the client
-  .catch(function(err) { // Report failure to the client
-    app.sessions.responseEnd(response, `Failed: ${err}`);
-  }.bind(this));
-}
-*/
-
-// class server
-/*
-callbackPromise(func, ...args) { // public: converts any callback function to a promise which resolves or rejects when the function has run
-  return new Promise(function(resolve, reject) {
-    func(...args, function(err) {
-      if (err) {
-        this.logError(`server.js callbackPromise error = ${err}`);
-        reject(err);
-      } else resolve();
-    }); // end callback and function
-  }) // end Promise
-}
-*/
-
-// class server
-/*
-saveEdit(obj, request, response) {
-  const data = obj.data;
-  const value = data.value;
-  const user = data.user;
-  const name = data.name || "_";
-  const extension = data.extension || "JSON";
-  const folder = data.folder || `Content/${data.page}/`;
-
-  const path = `${this.getDirectory(request)}/${folder}${name}.${extension}`
-  const now = new Date();
-  let archive = `${this.getDirectory(request)}/${folder}${now.toLocaleDateString().replace(/\//g,'-')}_${name}_${user}.${extension}`;
-
-  // First make sure the folder exists (since path and archive go in the same folder, I only need to do this once)
-  this.verifyPath(`${this.getDirectory(request)}/${folder}`.slice(0,-1))
-  .then(function() { // Then if the old file exists, move it to the archive
-    if (this.fs.existsSync(path)) {
-      return this.callbackPromise(this.fs.rename, path, archive);
-    }
-    else return Promise.resolve();
-  }.bind(this))
-  .then(this.callbackPromise.bind(this, this.fs.writeFile, path, value)) // Then write the new data to the current path
-  .then(this.sessions.responseEnd.bind(this, response, "Succeeded")) // Then alert the user that the edit was saved successfully
-  .catch(function(err) { // If there was a problem, log it and send the error message back to the user
-    console.log(err);
-    this.sessions.responseEnd(response, JSON.stringify(err));
-  }.bind(this));
-}
-*/
-
-// class server
-/*
-getDirectory(request) {
-  const hostName = request.headers.host.split(":")[0];
-  const subApp = request.url.split("/")[1];             // get the directory or application name
-  const subAppConfig = this.config.hosts[hostName].subApps[ subApp ];  // try to get config for an application
-  let directory = `${this.config.hosts[hostName].filePath}`;
-  if (subAppConfig) {
-    directory = `${subAppConfig.filePath}`;
-  }
-  return directory;
-}
-*/
-
-// class server
-/*
-removeDBSuffix (idString) {
-	let newID = idString;
-	if (typeof idString === "string") {
-		const parts = idString.split("_X_");
-		if (parts.length > 1) {
-			parts.pop();
-			newID = parts.join("_X_");
-		}
-	}
-
-	return newID;
-}
-*/
-
-//  serverClass
-/*
-addDBSuffix (idString, DB) {
-	if (!DB) DB = this.login.DB;
-
-	let newID = idString;
-	if (typeof idString === "string" && idString.indexOf('_X_') === -1) {
-		newID = `${idString}_X_${DB}`;
-  }
-	return newID;
-}
-*/
 
 //  serverClass
 } //////// end of class
