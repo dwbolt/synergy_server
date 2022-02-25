@@ -1,35 +1,30 @@
-/*
-
-small web server that serves static files and a
-API to webserver
-
-*/
-
-// built in nodejs modules
-const https    = require('https');  // access to https protocal
-const fs       = require('fs');     // access to local server file system
+// web server: static files and and API to webserver
 
 // create server class and load configuration file
-app       = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
+app = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
 
-// helper functions to get access to app object
-function requestIn(  request, response) {app.requestIn(           request, response);}
-function responseEnd(request, response) {app.sessions.responseEnd(request, response);}
-
-// server request and reponse loop
 async function startServer() {
-  await app.createLogFiles();
-  app.logError("function startServer - test error log")
-  app.sessions = new (require('./sessions.js'            ));   // keep track of sessions, requests and responses
+  // load classes
+  app.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
+  app.logs     = new (require('./logs.js'    ));   // logs
 
-  // start server loop
-  https.createServer(
+
+  await app.main();
+
+  // start timers
+  setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);
+  setInterval( app.logs.summary.bind(    app.logs    ), 5000);
+  const n= new Date();
+  app.logs.error(`server started  ${n.toISOString()}`);
+
+  // server loop
+  app.https.createServer(
     {
     // https certificates for encription
-    key:  fs.readFileSync('../certificates/sfcknox.org/private.key.pem')
-   ,cert: fs.readFileSync('../certificates/sfcknox.org/domain.cert.pem')
-   ,ca:   fs.readFileSync('../certificates/sfcknox.org/intermediate.cert.pem')
-    },requestIn
+    key:  app.fs.readFileSync('../certificates/sfcknox.org/private.key.pem')
+   ,cert: app.fs.readFileSync('../certificates/sfcknox.org/domain.cert.pem')
+   ,ca:   app.fs.readFileSync('../certificates/sfcknox.org/intermediate.cert.pem')
+    },app.requestIn.bind(app)
   ).listen(app.config.port);
 
   console.log(`https:// Server using port: ${app.config.port}`);

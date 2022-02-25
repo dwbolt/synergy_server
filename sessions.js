@@ -37,11 +37,6 @@ constructor () {
 
     // open sessions
     this.sessions     = {};  // open sessions
-
-    // set timer to run cleanUp every second
-    setInterval(function() {
-      this.cleanUp();
-    }.bind(this), 1000);
 }
 
 
@@ -87,8 +82,7 @@ initSession(
 
 // sessionsClass - server-side
 initRequest(sessionKey, request, response) { // private, intit Request object
-  app.logRequest.write(`${++this.requests},"${request.method}","${request.url}"\n`);
-  //response.setHeader('Set-Cookie', [`request=${this.requests};path="/"`]);
+  app.logs.request(++this.requests, request);
   const now = Date.now();
 
   const obj = {    // request object to store
@@ -121,12 +115,13 @@ responseEnd(
   response.end(content);  // tell the client there is no more coming
   delete this.openRequests[response.harmonyRequest];  // remove from openRequest object
   const keys = response.harmonyRequest.split("-"); // key[0] is sessionKey  key[1] is reqestKey
+
   const obj = this.sessions[keys[0]].requests[keys[1]];
-  obj.duration = Date.now() - obj.start;
+  obj.duration    = Date.now() - obj.start;
   obj.bytesSent   = content.length;
   this.bytesSent += content.length;
 
-  app.logResponse.write(`${JSON.stringify( obj )}\n`);
+  app.logs.response(obj);
 }
 
 
@@ -165,7 +160,7 @@ logout(
 // 2022-02-17 potental bug, not sure what happens if cleanUp takes longer than a second to run say durring a garbage collection
 // sessionsClass - server-side
 // private - called every second to get rid of inactive sessions and requests
-async cleanUp() {
+cleanUp() {
   // see if any sessions need to be culled
   for (let sess in this.sessions) { // Go through all existing sessions
     const session = this.sessions[sess];
@@ -182,19 +177,6 @@ async cleanUp() {
       delete this.sessions[sess];
     }
   }
-
-  // overwrite state of server to logfile
-  const content = `{
- "serverStart"     : ${this.serverStart}
-,"serverUpHr"      : ${(new Date()-this.serverStart)/(1000*60*60)}
-,"MBSent"          : ${this.bytesSent/1000000}
-,"requests"        : ${this.requests}
-,"requestsOpen"    : ${this.openRequests.length}
-,"sessionsTotal"   : ${this.sessionKey}
-,"sesstionsActive" : ${Object.keys(this.sessions).length}
-}`
-
-  await app.fsp.writeFile(app.logSummary,content);
 }
 
 
@@ -222,17 +204,6 @@ parseCookies (
 
   return list;
 }
-
-
-// sessionsClass - server-side
-// response ->
-// proxObj ->
-/* does not seemed to be used
-responseAddProxy(response, proxObj) {
-  const keys = response.harmonyRequest.split('-');
-  this.sessions[keys[0]].requests[keys[1]].proxy = proxObj;
-}
-*/
 
 
 // sessionsClass - server-side

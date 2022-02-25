@@ -45,14 +45,8 @@ constructor (s_configDir) {
   this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
-  this.sessions;  // will hold session class
-
-  // logging
-  this.logDir;        // string for location of log file
-  this.logRequest;    // fs.writeStream
-  this.logResponse;   // fs.writeStream
-  this.logSummary;    // string for location of log file
-  this.error;         // fs.writeStream
+  this.sessions;  // will point to sessionClass
+  this.logs;      // will point to logsClass
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -74,32 +68,17 @@ constructor (s_configDir) {
   };
 }
 
-
-//  serverClass
-async createLogFiles() {
-  // create log directory
-  try {
-    const n     =  new Date();
-    this.logDir =  app.config.logDir +"/"+ n.toISOString();
-
-    await this.verifyPath(this.logDir);
-    this.logRequest  = this.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
-    this.logResponse = this.fs.createWriteStream(this.logDir+"/response.cvs",{flags: 'a'});
-    this.error       = this.fs.createWriteStream(this.logDir+"/error.cvs"   ,{flags: 'a'});
-    this.logSummary  = this.logDir+"/summary.cvs" ;
-
-  } catch (e) {
-    // if there is a problem with the log file, then an error will be generated on each server request/response cycle
-    app.logError("serverClass.createLogFiles err="+e);
-  }
-}
-
-
-//  serverClass
 logError(msg) {
   // append message to log file
   this.error.write(msg+'\n');
 }
+
+//  serverClass
+async main() {
+  // create log directory
+  await this.logs.init();
+}
+
 
 //  serverClass
 //  public: requests start here
