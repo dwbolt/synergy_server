@@ -90,7 +90,8 @@ request(requestNum, request) {
 //  logClass - server-side
 response(obj){
   if (this.fsResponse) {
-    this.fsResponse.write(`${obj.requestNum},${obj.sessionKey},${obj.start},${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}\n`);
+    this.fsResponse.write(
+      `${obj.requestNum},${obj.sessionKey},"${new Date(obj.start).toISOString()}",${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}\n`);
   }
 }
 

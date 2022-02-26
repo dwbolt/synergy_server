@@ -120,7 +120,7 @@ responseEnd(
   obj.duration    = Date.now() - obj.start;
   obj.bytesSent   = content.length;
   this.bytesSent += content.length;
-
+//  obj.s_start     = new Date(obj.start).toISOString();
   app.logs.response(obj);
 }
 
