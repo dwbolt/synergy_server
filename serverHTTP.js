@@ -6,7 +6,7 @@ app = new (require('./server.js'))("./configHTTP");  // class where the work get
 // server request and reponse loop
 async function startServer() {
   await app.createLogFiles();
-  app.logError("function startServer - test error log")
+  app.log.error("function startServer - test error log")
   app.sessions = new (require('./sessions.js'            ));   // keep track of sessions, requests and responses
 
   // start server loop

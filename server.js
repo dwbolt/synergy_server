@@ -68,17 +68,6 @@ constructor (s_configDir) {
   };
 }
 
-logError(msg) {
-  // append message to log file
-  this.error.write(msg+'\n');
-}
-
-//  serverClass
-async main() {
-  // create log directory
-  await this.logs.init();
-}
-
 
 //  serverClass
 //  public: requests start here
@@ -102,7 +91,7 @@ requestIn(
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
     response.end(`configuration file: ${host}.json not found`);
-    this.logError(`configuration file: ${host}.json not found`);
+    this.log.error(`configuration file: ${host}.json not found`);
   }
 }
 
@@ -176,7 +165,7 @@ async serveFile(request, response) { // private:serve static file. could be html
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
         content = `${filePath} - file not found`;
-        this.logError(content);
+        this.log.error(content);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
@@ -202,7 +191,7 @@ web(obj, request, response) {  // private: process request
     this.sessions[obj.msg](obj, request, response);
   } else {
     // get error to user, add to server log
-    this.logError( `"Error: server -> method 'web', message = '${obj.msg}"` );
+    this.log.error( `"Error: server -> method 'web', message = '${obj.msg}"` );
   }
 }
 
@@ -237,7 +226,7 @@ POST(
         break;*/
       default:
         // get error to user, add to server log
-        this.logError(`Error server.js POST obj.server = ${obj.server}`);
+        this.log.error(`Error server.js POST obj.server = ${obj.server}`);
     }
   });
 }
@@ -335,7 +324,7 @@ async verifyPath(
   try {
     await this.fsp.mkdir(path, {recursive: true});
   } catch (e) {
-    this.logError(`server.js verifyPath error = ${e}`);
+    this.log.error(`server.js verifyPath error = ${e}`);
   }
 }
 

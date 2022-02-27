@@ -39,28 +39,21 @@ constructor () {
 
 
 //  logClass - server-side
-// reate log files if needed
+// create log files if needed
 async init() {
   // create log directory
   try {
-    // creatre directory for the day
+    // creatre a new directory for the day
     const now    =  new Date();
     const logDir =  app.config.logDir +"/"+ now.toISOString().substr(0,10);
-    if (!this.logDir ||  this.logDir != logDir ) {
-      // create new logfiles
-      this.logDir = logDir;
-      await app.verifyPath(this.logDir);
 
-      // create streams
-      this.fsError    = app.fs.createWriteStream(this.logDir+"/error.cvs"   ,{flags: 'a'});
-      this.fsRequest  = app.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
-      this.fsResponse = app.fs.createWriteStream(this.logDir+"/response.cvs",{flags: 'a'});
-
-      // will be overwriting this file
-      this.dirSummary  = this.logDir+"/summary.json";
-
-      // set timer to run cleanUp every second
-  //    setInterval(this.cleanUp().bind(this), 1000);
+    if (!this.logDir) {
+      // server startup
+      await this.createLogStreams(logDir);
+    } if (this.logDir != logDir ) {
+      // The day has changed
+        await this.createLogStreams(logDir);
+              this.writeHeaders();
     }
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
@@ -69,30 +62,57 @@ async init() {
 }
 
 
-//  serverClass
+//  logClass - server-side
+async createLogStreams(logDir) {
+  // create new logfiles
+  this.logDir = logDir;
+  await app.verifyPath(this.logDir);
+
+  // create streams
+  this.fsError    = app.fs.createWriteStream(this.logDir+"/error.cvs"   ,{flags: 'a'});
+  this.fsRequest  = app.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
+  this.fsResponse = app.fs.createWriteStream(this.logDir+"/response.cvs",{flags: 'a'});
+
+  // will be overwriting this file
+  this.dirSummary  = this.logDir+"/summary.json";
+
+  // write CSV headers if the files do not exist
+  if (!app.fs.existsSync(this.logDir+"/error.cvs")) {
+    this.fsError.write(`"Time Stamp","Message"\n`);
+  }
+  if (!app.fs.existsSync(this.logDir+"/request.cvs")) {
+    this.fsRequest.write(`"Time Stamp","Request","Method","URL"\n`);
+  }
+  if (!app.fs.existsSync(this.logDir+"/response.cvs")) {
+    this.fsResponse.write(`"Time Stamp","Request","Session Key","Start","Last Request","Duration","ip","method","URL","Bytes"\n`);
+  }
+
+  // if summary exist, then load it and init server info
+  if (app.fs.existsSync(this.dirSummary)) {
+    await app.sessions.initSummary(this.dirSummary);
+  }
+}
+
+
+//  logClass - server-side
 error(msg) {
   // append message to log file
-  if (this.fsError) {
-    this.fsError.write(msg+'\n');
-  }
+  this.write( this.fsError, `"${msg}"` );
 }
 
 
 //  logClass - server-side
 request(requestNum, request) {
   // append message to log file
-  if (this.fsRequest) {
-    this.fsRequest.write(`${requestNum},"${request.method}","${request.url}"\n`);
-  }
+  this.write(this.fsRequest,`${requestNum},"${request.method}","${request.url}"`);
 }
 
 
 //  logClass - server-side
 response(obj){
-  if (this.fsResponse) {
-    this.fsResponse.write(
-      `${obj.requestNum},${obj.sessionKey},"${new Date(obj.start).toISOString()}",${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}\n`);
-  }
+  this.write(this.fsResponse,
+      `${obj.requestNum},${obj.sessionKey},${obj.start},${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}`
+    );
 }
 
 
@@ -100,18 +120,34 @@ response(obj){
 summary() {
   const o= app.sessions;
   const obj = `{
-"serverStart"      : ${o.serverStart}
+"serverStart"      : "${new Date(o.serverStart).toISOString()}"
 ,"serverUpHr"      : ${(new Date()-o.serverStart)/(1000*60*60)}
-,"MBSent"          : ${o.bytesSent/1000000}
+,"bytesSent"       : ${o.bytesSent}
 ,"requests"        : ${o.requests}
-,"requestsOpen"    : ${o.openRequests.length}
 ,"sessionsTotal"   : ${o.sessionKey}
+,"requestsOpen"    : ${o.openRequests.length}
 ,"sesstionsActive" : ${Object.keys(o.sessions).length}
 }`
 
   // overwrite state of server to logfile
   app.fsp.writeFile(this.dirSummary, obj);
 }
+
+
+write(stream,msg){
+  // adding date and convert to CSV format (commas and quotes to mssage)
+//  const n = new Date();
+  const m = `"${new Date().toISOString()}",${msg}\n`;
+
+  if (stream) {
+    // add end of line to mssage
+    stream.write(`${m}`);
+  } else {
+    // log error to consle since stream does not exist (we have a bug if this happens)
+    console.log(m);
+  }
+}
+
 
 //  logClass - server-side
 } //////// end of class

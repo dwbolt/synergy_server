@@ -9,13 +9,13 @@ async function startServer() {
   app.logs     = new (require('./logs.js'    ));   // logs
 
 
-  await app.main();
+  await app.logs.init();
 
   // start timers
   setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);
   setInterval( app.logs.summary.bind(    app.logs    ), 5000);
-  const n= new Date();
-  app.logs.error(`server started  ${n.toISOString()}`);
+
+  app.logs.error(`server started `);
 
   // server loop
   app.https.createServer(
