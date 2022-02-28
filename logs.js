@@ -69,22 +69,22 @@ async createLogStreams(logDir) {
   await app.verifyPath(this.logDir);
 
   // create streams
-  this.fsError    = app.fs.createWriteStream(this.logDir+"/error.cvs"   ,{flags: 'a'});
-  this.fsRequest  = app.fs.createWriteStream(this.logDir+"/request.cvs" ,{flags: 'a'});
-  this.fsResponse = app.fs.createWriteStream(this.logDir+"/response.cvs",{flags: 'a'});
+  this.fsError    = app.fs.createWriteStream(this.logDir+"/error.csv"   ,{flags: 'a'});
+  this.fsRequest  = app.fs.createWriteStream(this.logDir+"/request.csv" ,{flags: 'a'});
+  this.fsResponse = app.fs.createWriteStream(this.logDir+"/response.csv",{flags: 'a'});
 
   // will be overwriting this file
   this.dirSummary  = this.logDir+"/summary.json";
 
   // write CSV headers if the files do not exist
-  if (!app.fs.existsSync(this.logDir+"/error.cvs")) {
-    this.fsError.write(`"Time Stamp","Message"\n`);
+  if (!app.fs.existsSync(this.logDir+"/error.csv")) {
+    this.fsError.write(`"Time Stamp","Message"\r\n`);
   }
-  if (!app.fs.existsSync(this.logDir+"/request.cvs")) {
-    this.fsRequest.write(`"Time Stamp","Request","Method","URL"\n`);
+  if (!app.fs.existsSync(this.logDir+"/request.csv")) {
+    this.fsRequest.write(`"Time Stamp","Request","Method","URL"\r\n`);
   }
-  if (!app.fs.existsSync(this.logDir+"/response.cvs")) {
-    this.fsResponse.write(`"Time Stamp","Request","Session Key","Start","Last Request","Duration","ip","method","URL","Bytes"\n`);
+  if (!app.fs.existsSync(this.logDir+"/response.csv")) {
+    this.fsResponse.write(`"Time Stamp","Request","Session Key","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
   }
 
   // if summary exist, then load it and init server info
@@ -136,8 +136,7 @@ summary() {
 
 write(stream,msg){
   // adding date and convert to CSV format (commas and quotes to mssage)
-//  const n = new Date();
-  const m = `"${new Date().toISOString()}",${msg}\n`;
+  const m = `"${new Date().toISOString()}",${msg}\r\n`;
 
   if (stream) {
     // add end of line to mssage

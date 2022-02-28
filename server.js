@@ -91,7 +91,7 @@ requestIn(
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
     response.end(`configuration file: ${host}.json not found`);
-    this.log.error(`configuration file: ${host}.json not found`);
+    app.logs.error(`configuration file: ${host}.json not found`);
   }
 }
 
@@ -165,7 +165,7 @@ async serveFile(request, response) { // private:serve static file. could be html
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
         content = `${filePath} - file not found`;
-        this.log.error(content);
+        app.logs.error(content);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
@@ -191,7 +191,7 @@ web(obj, request, response) {  // private: process request
     this.sessions[obj.msg](obj, request, response);
   } else {
     // get error to user, add to server log
-    this.log.error( `"Error: server -> method 'web', message = '${obj.msg}"` );
+    app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"` );
   }
 }
 
@@ -226,7 +226,7 @@ POST(
         break;*/
       default:
         // get error to user, add to server log
-        this.log.error(`Error server.js POST obj.server = ${obj.server}`);
+        app.logs.error(`Error server.js POST obj.server = ${obj.server}`);
     }
   });
 }
@@ -324,7 +324,7 @@ async verifyPath(
   try {
     await this.fsp.mkdir(path, {recursive: true});
   } catch (e) {
-    this.log.error(`server.js verifyPath error = ${e}`);
+    app.logs.error(`server.js verifyPath error = ${e}`);
   }
 }
 
