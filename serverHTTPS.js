@@ -21,9 +21,9 @@ async function startServer() {
   app.https.createServer(
     {
     // https certificates for encription
-    key:  app.fs.readFileSync('../certificates/sfcknox.org/private.key.pem')
-   ,cert: app.fs.readFileSync('../certificates/sfcknox.org/domain.cert.pem')
-   ,ca:   app.fs.readFileSync('../certificates/sfcknox.org/intermediate.cert.pem')
+    key:  app.fs.readFileSync('../certificates/private.key.pem')
+   ,cert: app.fs.readFileSync('../certificates/domain.cert.pem')
+   ,ca:   app.fs.readFileSync('../certificates/intermediate.cert.pem')
     },app.requestIn.bind(app)
   ).listen(app.config.port);
 
