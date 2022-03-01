@@ -102,12 +102,11 @@ initSession(
 
 // sessionsClass - server-side
 initRequest(sessionKey, request, response) { // private, intit Request object
-  app.logs.request(++this.requests, request);
   const now = Date.now();
 
   const obj = {    // request object to store
     "sessionKey"  : sessionKey
-    ,"requestNum" : this.requests
+    ,"requestNum" : ++this.requests
     ,"start"      : now
     ,"lastRequest": now - this.lastRequest
     ,"duration"   : 0                                // will be replaced with milliseconds it took to process
@@ -122,6 +121,7 @@ initRequest(sessionKey, request, response) { // private, intit Request object
   this.openRequests[key]   = 0;                     // store request that is in process and that it just started procesing
   response.harmonyRequest = key;                    // store in response way to delete openRequest when it is done
   this.sessions[sessionKey].requests[nextRequestKey] = obj;  // store request in session
+  app.logs.request(sessionKey,this.requests, request);
 }
 
 

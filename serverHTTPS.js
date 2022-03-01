@@ -12,12 +12,12 @@ async function startServer() {
   await app.logs.init();
 
   // start timers
-  setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);
-  setInterval( app.logs.summary.bind(    app.logs    ), 5000);
+  setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);  // delete inactive sessions
+  setInterval( app.logs.summary.bind(    app.logs    ), 5000);  // over write daily summary log
 
-  app.logs.error(`server started `);
+  app.logs.error(`server started `);  // only an error if pm2 is restarting sever
 
-  // server loop
+  // server listen for web requests
   app.https.createServer(
     {
     // https certificates for encription
@@ -27,7 +27,9 @@ async function startServer() {
     },app.requestIn.bind(app)
   ).listen(app.config.port);
 
+  // will apear in pm2 logs - along with any error messeges if the loggin object has an error
   console.log(`https:// Server using port: ${app.config.port}`);
 }
 
+// init web server and start listening for rquests
 startServer();

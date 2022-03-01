@@ -31,11 +31,11 @@ Each time the server starts and new log directory is created with the name:  YYY
     number of unique users
 */
 
-//  serverClass
+//  serverClass - server-side
 module.exports = class serverClass {
 
 
-//  serverClass
+//  serverClass - server-side
 constructor (s_configDir) {
   // native nodejs modules
   this.https    = require('https')      ; // process https requests
@@ -50,26 +50,68 @@ constructor (s_configDir) {
 
   this.mimeTypes = {
       '.html': 'text/html',
-      '.js': 'text/javascript',
-      '.css': 'text/css',
+      '.js'  : 'text/javascript',
+      '.css' : 'text/css',
       '.json': 'application/json',
-      '.pdf': 'application/pdf',
-      '.png': 'image/png',
-      '.jpg': 'image/jpg',
-      '.gif': 'image/gif',
-      '.wav': 'audio/wav',
-      '.mp4': 'video/mp4',
+      '.pdf' : 'application/pdf',
+      '.png' : 'image/png',
+      '.jpg' : 'image/jpg',
+      '.gif' : 'image/gif',
+      '.wav' : 'audio/wav',
+      '.mp4' : 'video/mp4',
       '.woff': 'application/font-woff',
-      '.ttf': 'application/font-ttf',
-      '.eot': 'application/vnd.ms-fontobject',
-      '.otf': 'application/font-otf',
-      '.svg': 'application/image/svg+xml',
-      '.docx': 'application/docx'
+      '.ttf' : 'application/font-ttf',
+      '.eot' : 'application/vnd.ms-fontobject',
+      '.otf' : 'application/font-otf',
+      '.svg' : 'application/image/svg+xml',
+      '.docx':'application/docx',
+      '.txt' : 'text/plain'
   };
+
+// keep this inplace until the old urls are not being used
+  this.redirectData = {
+    "makersmarket"      : "p=makers-market"
+    ,"become-a-member"  : "p=member"
+    ,"buy-microgreens"  : "p=page-not-on-website"
+    ,"market-music"     : "p=page-not-on-website"
+    ,"community-thrives": "p=page-not-on-website"
+    ,"flowjam"          : "p=page-not-on-website"
+    ,"library"          : "p=library"
+
+    ,"makers-market-registration" : "p=makers-market&b=Vendor%20Registration"
+
+    }
 }
 
+/*
+,"6":""
+,"7":""
+,"8":""
+,"9":""
+,"0":""
+,"11":""
+,"12":""
+,"13":""
+,"14":""
+,"15":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+,"":""
+*/
 
-//  serverClass
+//  serverClass - server-side
 //  public: requests start here
 requestIn(
    request
@@ -83,7 +125,7 @@ requestIn(
     if (request.method === "POST") {
       // talk to this web server or upstream server, return result to client
       this.POST(request, response);
-    } else {
+    } else if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
       // serve static file
       this.serveFile(request, response);
     }
@@ -96,7 +138,7 @@ requestIn(
 }
 
 
-//  serverClass
+//  serverClass - server-side
 loadConfiguration(s_configDir) { // private:
   // configuration file
   const config  = require(`${s_configDir}/_config.json`);   // ports, domains served, etc on server
@@ -119,11 +161,31 @@ loadConfiguration(s_configDir) { // private:
 }
 
 
-//  serverClass
+//  serverClass - server-side
+redirect(request, response) {
+    // strip off leading / and covert to lowercase
+    const  url = request.url.substr(1).toLowerCase();
+
+    if( this.redirectData[url] ) {
+      // we found a redirect
+      const content = `
+        <meta http-equiv="Refresh" content="5; url='/app.html?${this.redirectData[url]}'" />
+        <h1><br/><br/>This page has a new location<br><br><a href="/app.html?${this.redirectData[url]}">/app.html?${this.redirectData[url]}</a><br/><br/>
+        new page should load in 5 seconds.<br>You may click the link if the redirect fails to work</h1>`;
+      app.sessions.responseEnd(response, content)
+      return true;
+    } else {
+      // did not find a redirect
+      return false;
+    }
+}
+
+
+//  serverClass - server-side
 async serveFile(request, response) { // private:serve static file. could be html, JSON, etc
     // serve the default application
-    const hostName = request.headers.host.split(":")[0];  // just want hostname, without port #
-    const subApp = request.url.split("/")[1];             // get the directory or application name
+    const hostName     = request.headers.host.split(":")[0];             // just want hostname, without port #
+    const subApp       = request.url.split("/")[1];                      // get the directory or application name
     const subAppConfig = this.config.hosts[hostName].subApps[ subApp ];  // try to get config for an application
     let filePath;
 
@@ -164,8 +226,10 @@ async serveFile(request, response) { // private:serve static file. could be html
     if(e.code == 'ENOENT'){
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
-        content = `${filePath} - file not found`;
-        app.logs.error(content);
+        content = `
+          <meta http-equiv="Refresh" content="0; url='/app.html?p=page-not-found'" />
+          <p>Redirect to new url</p>`;
+        app.logs.error("page not found");
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
@@ -178,7 +242,7 @@ async serveFile(request, response) { // private:serve static file. could be html
 }
 
 
-//  serverClass
+//  serverClass - server-side
 // obj
 // request
 // response
@@ -196,7 +260,7 @@ web(obj, request, response) {  // private: process request
 }
 
 
-//  serverClass
+//  serverClass - server-side
 // private:
 POST(
    request  // request ->
@@ -230,57 +294,6 @@ POST(
     }
   });
 }
-
-
-//  serverClass
-error(obj, request, response) {  // private:
-  const data = obj.data;
-  const errorObj = {
-    "data": data,
-    "method": "post"
-  };
-
-  this.couchdbProxy.request(errorObj, request, response, this.couchConfig.errorDB);
-}
-
-
-//  serverClass
-getFromHarmonyByID(obj, request, response) { // private:
-  const IDs = obj.IDs;
-  const cookie = this.sessions.parseCookies(request);
-
-  if (cookie.serverStart && cookie.serverStart == this.sessions.serverStart
-      && cookie.sessionKey && this.sessions.sessions[cookie.sessionKey]) {
-    const obj = {
-      "path": `/${this.couchConfig.mainDB}/_find`,
-      "method": "post"
-    };
-
-    const data = JSON.stringify({"selector": {"_id": {"$in":IDs}}});
-
-    app.couchDB.request(obj, data) // see if userid, password match a user in db
-    .then(function(result) {
-      this.sessions.responseEnd(response, JSON.stringify(result));
-    }.bind(this));
-  } else {
-    response.end("Not Logged In");
-  }
-}
-
-
-//  serverClass
-getFileNames(obj, request, response) {
-  const data = obj.data;
-  const directory = this.getDirectory(request);
-
-  const path = `${directory}/${data.path}`;
-  console.log(path);
-
-  this.checkDirectory(path);
-  const fileNames = this.fs.readdirSync(path);
-  this.sessions.responseEnd(response, JSON.stringify(fileNames));
-}
-
 
 
 // class server
@@ -329,5 +342,62 @@ async verifyPath(
 }
 
 
-//  serverClass
+//  serverClass - server-side
 } //////// end of class
+
+
+/*
+
+
+
+//  serverClass - server-side
+error(obj, request, response) {  // private:
+  const data = obj.data;
+  const errorObj = {
+    "data": data,
+    "method": "post"
+  };
+
+  this.couchdbProxy.request(errorObj, request, response, this.couchConfig.errorDB);
+}
+
+
+
+//  serverClass - server-side
+getFileNames(obj, request, response) {
+  const data = obj.data;
+  const directory = this.getDirectory(request);
+
+  const path = `${directory}/${data.path}`;
+  console.log(path);
+
+  this.checkDirectory(path);
+  const fileNames = this.fs.readdirSync(path);
+  this.sessions.responseEnd(response, JSON.stringify(fileNames));
+}
+
+
+//  serverClass - server-side
+getFromHarmonyByID(obj, request, response) { // private:
+  const IDs = obj.IDs;
+  const cookie = this.sessions.parseCookies(request);
+
+  if (cookie.serverStart && cookie.serverStart == this.sessions.serverStart
+      && cookie.sessionKey && this.sessions.sessions[cookie.sessionKey]) {
+    const obj = {
+      "path": `/${this.couchConfig.mainDB}/_find`,
+      "method": "post"
+    };
+
+    const data = JSON.stringify({"selector": {"_id": {"$in":IDs}}});
+
+    app.couchDB.request(obj, data) // see if userid, password match a user in db
+    .then(function(result) {
+      this.sessions.responseEnd(response, JSON.stringify(result));
+    }.bind(this));
+  } else {
+    response.end("Not Logged In");
+  }
+}
+
+*/

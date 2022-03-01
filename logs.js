@@ -81,7 +81,7 @@ async createLogStreams(logDir) {
     this.fsError.write(`"Time Stamp","Message"\r\n`);
   }
   if (!app.fs.existsSync(this.logDir+"/request.csv")) {
-    this.fsRequest.write(`"Time Stamp","Request","Method","URL"\r\n`);
+    this.fsRequest.write(`"Time Stamp","session","Request","Method","URL"\r\n`);
   }
   if (!app.fs.existsSync(this.logDir+"/response.csv")) {
     this.fsResponse.write(`"Time Stamp","Request","Session Key","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
@@ -102,9 +102,9 @@ error(msg) {
 
 
 //  logClass - server-side
-request(requestNum, request) {
+request(key,requestNum, request) {
   // append message to log file
-  this.write(this.fsRequest,`${requestNum},"${request.method}","${request.url}"`);
+  this.write(this.fsRequest,`"${session}",${requestNum},"${request.method}","${request.url}"`);
 }
 
 
