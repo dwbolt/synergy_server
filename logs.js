@@ -84,7 +84,7 @@ async createLogStreams(logDir) {
     this.fsRequest.write(`"Time Stamp","session","Request","Method","URL"\r\n`);
   }
   if (!app.fs.existsSync(this.logDir+"/response.csv")) {
-    this.fsResponse.write(`"Time Stamp","Request","Session Key","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
+    this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
   }
 
   // if summary exist, then load it and init server info
@@ -102,7 +102,7 @@ error(msg) {
 
 
 //  logClass - server-side
-request(key,requestNum, request) {
+request(session,requestNum, request) {
   // append message to log file
   this.write(this.fsRequest,`"${session}",${requestNum},"${request.method}","${request.url}"`);
 }
@@ -111,7 +111,7 @@ request(key,requestNum, request) {
 //  logClass - server-side
 response(obj){
   this.write(this.fsResponse,
-      `${obj.requestNum},${obj.sessionKey},${obj.start},${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}`
+      `${obj.sessionKey},${obj.requestNum},${obj.start},${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}`
     );
 }
 
