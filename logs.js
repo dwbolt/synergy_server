@@ -44,7 +44,6 @@ async init() {
   // create log directory
   try {
     // creatre a new directory for the day
-//    const now    =  new Date();
     await this.createLogStreams( app.config.logDir +"/"+ new Date().toISOString().substr(0,10) );
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
@@ -120,7 +119,7 @@ response(obj){
 
 
 //  logClass - server-side
-summary() {
+async summary() {
   const o= app.sessions;
   const obj = `{
 "serverStart"      : "${new Date(o.serverStart).toISOString()}"
@@ -133,7 +132,7 @@ summary() {
 }`
 
   // overwrite state of server to logfile
-  app.fsp.writeFile(this.summaryFile, obj);
+  await app.fsp.writeFile(this.summaryFile, obj);
 }
 
 
