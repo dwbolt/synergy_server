@@ -45,8 +45,8 @@ constructor (s_configDir) {
   this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
-  this.sessions;  // will point to sessionClass
-  this.logs;      // will point to logsClass
+  this.sessions;  // will point to instance of sessionClass
+  this.logs;      // will point to instance of logsClass
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -70,9 +70,10 @@ constructor (s_configDir) {
 
 // keep this inplace until the old wix urls are not being used
   this.redirectData = {
-    "makersmarket"      : "p=makers-market"
-    ,"become-a-member"  : "p=member"
-    ,"library"          : "p=library"
+    "makersmarket"        : "p=makers-market"
+    ,"become-a-member"    : "p=member"
+    ,"library"            : "p=library"
+    ,"permaculture-ethics": "p=permaEthics"
 
     ,"makers-market-registration" : "p=makers-market&b=Vendor%20Registration"
     ,"sustainable-future-llc"     : "p=solar"
@@ -81,13 +82,11 @@ constructor (s_configDir) {
     ,"market-music"     : "p=page-not-on-website"
     ,"community-thrives": "p=page-not-on-website"
     ,"flowjam"          : "p=page-not-on-website"
+    ,"our-work"         : "p=page-not-on-website"
     }
 }
 
 /*
-
-,"7":""
-,"8":""
 ,"9":""
 ,"0":""
 ,"11":""
@@ -338,7 +337,7 @@ async verifyPath(
   try {
     await this.fsp.mkdir(path, {recursive: true});
   } catch (e) {
-    app.logs.error(`server.js verifyPath error = ${e}`, request, response);
+    app.logs.error(`server.js verifyPath error = ${e}`);
   }
 }
 

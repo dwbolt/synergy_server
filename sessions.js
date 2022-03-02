@@ -42,21 +42,25 @@ constructor () {
 // sessionsClass - server-side
 async initSummary(fileName) {
   // if server restarts in the middle of the day, load the last data and start from there
-/*
-  "serverStart"     : 1645885083838
-,"serverUpHr"      : 15.740024722222222
-,"bytesSent"          : 0.651191
-,"requests"        : 83
-,"sessionsTotal"   : 35
-,"sesstionsActive" : 2
-*/
 
-  // will lose any info between last summary write and server re-start
-  const str  = await app.fsp.readFile(fileName);
-  const s    = JSON.parse(str);
-  this.requests   = s.requests;
-  this.sessionKey = s.sessionsTotal;
-  this.bytesSent  = s.bytesSent;
+  // make sure there is a file to load
+  const stats = await app.fsp.stat(fileName);
+  if (0 < stats.size ) {
+    // will lose any info between last summary write and server re-start
+    /*
+     "serverStart"     : 1645885083838
+    ,"serverUpHr"      : 15.740024722222222
+    ,"bytesSent"       : 0.651191
+    ,"requests"        : 83
+    ,"sessionsTotal"   : 35
+    ,"sesstionsActive" : 2
+    */
+    const str  = await app.fsp.readFile(fileName);
+    const s    = JSON.parse(str);
+    this.requests   = s.requests;
+    this.sessionKey = s.sessionsTotal;
+    this.bytesSent  = s.bytesSent;
+  }
 }
 
 

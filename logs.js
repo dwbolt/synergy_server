@@ -34,7 +34,7 @@ constructor () {
   this.fsError;      // fs.writeStream  append
   this.fsRequest;    // fs.writeStream  append
   this.fsResponse;   // fs.writeStream  append
-  this.fsSummary;    // string for location of log file
+  this.summaryFile;  // string for location of log file
 }
 
 
@@ -44,17 +44,8 @@ async init() {
   // create log directory
   try {
     // creatre a new directory for the day
-    const now    =  new Date();
-    const logDir =  app.config.logDir +"/"+ now.toISOString().substr(0,10);
-
-    if (!this.logDir) {
-      // server startup
-      await this.createLogStreams(logDir);
-    } if (this.logDir != logDir ) {
-      // The day has changed
-        await this.createLogStreams(logDir);
-              this.writeHeaders();
-    }
+//    const now    =  new Date();
+    await this.createLogStreams( app.config.logDir +"/"+ new Date().toISOString().substr(0,10) );
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
     console.log("logClass.init err="+e);
@@ -66,7 +57,7 @@ async init() {
 async createLogStreams(logDir) {
   // create new logfiles
   this.logDir = logDir;
-  await app.verifyPath(this.logDir);
+  await app.verifyPath(this.logDir);  // create directory if it does not exist
 
   // create streams
   this.fsError    = app.fs.createWriteStream(this.logDir+"/error.csv"   ,{flags: 'a'});
@@ -74,23 +65,29 @@ async createLogStreams(logDir) {
   this.fsResponse = app.fs.createWriteStream(this.logDir+"/response.csv",{flags: 'a'});
 
   // will be overwriting this file
-  this.dirSummary  = this.logDir+"/summary.json";
+  this.fileSummary  = this.logDir+"/summary.json";
 
-  // write CSV headers if the files do not exist
-  if (!app.fs.existsSync(this.logDir+"/error.csv")) {
+
+  // write CSV headers if the files are empty
+  let stats;
+  stats = await app.fsp.stat(this.logDir+"/error.csv");
+  if (stats.size === 0) {
     this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
   }
-  if (!app.fs.existsSync(this.logDir+"/request.csv")) {
+
+  stats = await app.fsp.stat(this.logDir+"/request.csv");
+  if (stats.size === 0) {
     this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
   }
-  if (!app.fs.existsSync(this.logDir+"/response.csv")) {
+
+  stats = await app.fsp.stat(this.logDir+"/response.csv");
+  if (stats.size === 0) {
     this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
   }
 
   // if summary exist, then load it and init server info
-  if (app.fs.existsSync(this.dirSummary)) {
-    await app.sessions.initSummary(this.dirSummary);
-  }
+  this.summaryFile = this.logDir + "/summary.json"
+  await app.sessions.initSummary(this.summaryFile);
 }
 
 
@@ -136,7 +133,7 @@ summary() {
 }`
 
   // overwrite state of server to logfile
-  app.fsp.writeFile(this.dirSummary, obj);
+  app.fsp.writeFile(this.summaryFile, obj);
 }
 
 
