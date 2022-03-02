@@ -68,23 +68,24 @@ constructor (s_configDir) {
       '.txt' : 'text/plain'
   };
 
-// keep this inplace until the old urls are not being used
+// keep this inplace until the old wix urls are not being used
   this.redirectData = {
     "makersmarket"      : "p=makers-market"
     ,"become-a-member"  : "p=member"
+    ,"library"          : "p=library"
+
+    ,"makers-market-registration" : "p=makers-market&b=Vendor%20Registration"
+    ,"sustainable-future-llc"     : "p=solar"
+
     ,"buy-microgreens"  : "p=page-not-on-website"
     ,"market-music"     : "p=page-not-on-website"
     ,"community-thrives": "p=page-not-on-website"
     ,"flowjam"          : "p=page-not-on-website"
-    ,"library"          : "p=library"
-
-    ,"makers-market-registration" : "p=makers-market&b=Vendor%20Registration"
-
     }
 }
 
 /*
-,"6":""
+
 ,"7":""
 ,"8":""
 ,"9":""
@@ -132,8 +133,8 @@ requestIn(
   } else {
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
-    response.end(`configuration file: ${host}.json not found`);
-    app.logs.error(`configuration file: ${host}.json not found`);
+    response.end(`error logged`);
+    app.logs.error(`configuration file: ${host}.json not found`,request,response);
   }
 }
 
@@ -229,7 +230,7 @@ async serveFile(request, response) { // private:serve static file. could be html
         content = `
           <meta http-equiv="Refresh" content="0; url='/app.html?p=page-not-found'" />
           <p>Redirect to new url</p>`;
-        app.logs.error("page not found");
+        app.logs.error(`file not found - ${filePath}`,request, response);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
@@ -255,7 +256,7 @@ web(obj, request, response) {  // private: process request
     this.sessions[obj.msg](obj, request, response);
   } else {
     // get error to user, add to server log
-    app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"` );
+    app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
   }
 }
 
@@ -290,7 +291,7 @@ POST(
         break;*/
       default:
         // get error to user, add to server log
-        app.logs.error(`Error server.js POST obj.server = ${obj.server}`);
+        app.logs.error(`Error server.js POST obj.server = ${obj.server}`, request, response);
     }
   });
 }
@@ -337,67 +338,10 @@ async verifyPath(
   try {
     await this.fsp.mkdir(path, {recursive: true});
   } catch (e) {
-    app.logs.error(`server.js verifyPath error = ${e}`);
+    app.logs.error(`server.js verifyPath error = ${e}`, request, response);
   }
 }
 
 
 //  serverClass - server-side
 } //////// end of class
-
-
-/*
-
-
-
-//  serverClass - server-side
-error(obj, request, response) {  // private:
-  const data = obj.data;
-  const errorObj = {
-    "data": data,
-    "method": "post"
-  };
-
-  this.couchdbProxy.request(errorObj, request, response, this.couchConfig.errorDB);
-}
-
-
-
-//  serverClass - server-side
-getFileNames(obj, request, response) {
-  const data = obj.data;
-  const directory = this.getDirectory(request);
-
-  const path = `${directory}/${data.path}`;
-  console.log(path);
-
-  this.checkDirectory(path);
-  const fileNames = this.fs.readdirSync(path);
-  this.sessions.responseEnd(response, JSON.stringify(fileNames));
-}
-
-
-//  serverClass - server-side
-getFromHarmonyByID(obj, request, response) { // private:
-  const IDs = obj.IDs;
-  const cookie = this.sessions.parseCookies(request);
-
-  if (cookie.serverStart && cookie.serverStart == this.sessions.serverStart
-      && cookie.sessionKey && this.sessions.sessions[cookie.sessionKey]) {
-    const obj = {
-      "path": `/${this.couchConfig.mainDB}/_find`,
-      "method": "post"
-    };
-
-    const data = JSON.stringify({"selector": {"_id": {"$in":IDs}}});
-
-    app.couchDB.request(obj, data) // see if userid, password match a user in db
-    .then(function(result) {
-      this.sessions.responseEnd(response, JSON.stringify(result));
-    }.bind(this));
-  } else {
-    response.end("Not Logged In");
-  }
-}
-
-*/

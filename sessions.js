@@ -115,13 +115,16 @@ initRequest(sessionKey, request, response) { // private, intit Request object
     ,"url"        : request.url
   }
 
-  this.lastRequest = now; // update to now, so we log time between now and next request
-  const nextRequestKey = this.sessions[sessionKey].requests.length;
-  const key = sessionKey +"-"+ nextRequestKey;
-  this.openRequests[key]   = 0;                     // store request that is in process and that it just started procesing
-  response.harmonyRequest = key;                    // store in response way to delete openRequest when it is done
+  this.lastRequest         = now; // update to now, so we log time between now and next request
+  const nextRequestKey     = this.sessions[sessionKey].requests.length;
+
+  // store in response way to delete openRequest when it is done, also store sessionNumber and RequestNumber for logging
+  const key                = sessionKey +"-"+ nextRequestKey;
+  this.openRequests[key]   = 0;                      // store request that is in process and that it just started procesing
+  response.synergyRequest  = { "openReqestKey": key, "sessionNumber":sessionKey, "requestNumber": nextRequestKey  }
+
   this.sessions[sessionKey].requests[nextRequestKey] = obj;  // store request in session
-  app.logs.request(sessionKey,this.requests, request);
+  app.logs.request(request,response);
 }
 
 
@@ -133,10 +136,9 @@ responseEnd(
 ) {
   // make request complete not written yet
   response.end(content);  // tell the client there is no more coming
-  delete this.openRequests[response.harmonyRequest];  // remove from openRequest object
-  const keys = response.harmonyRequest.split("-"); // key[0] is sessionKey  key[1] is reqestKey
+  delete this.openRequests[response.synergyRequest.openReqestKey];  // remove from openRequest object
 
-  const obj = this.sessions[keys[0]].requests[keys[1]];
+  const obj = this.sessions[response.synergyRequest.sessionNumber].requests[response.synergyRequest.requestNumber];
   obj.duration    = Date.now() - obj.start;
   obj.bytesSent   = content.length;
   this.bytesSent += content.length;

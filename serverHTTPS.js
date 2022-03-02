@@ -15,7 +15,7 @@ async function startServer() {
   setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);  // delete inactive sessions
   setInterval( app.logs.summary.bind(    app.logs    ), 5000);  // over write daily summary log
 
-  app.logs.error(`server started `);  // only an error if pm2 is restarting sever
+  app.logs.error(`server started`);  // only an error if pm2 is restarting sever
 
   // server listen for web requests
   app.https.createServer(

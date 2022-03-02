@@ -78,10 +78,10 @@ async createLogStreams(logDir) {
 
   // write CSV headers if the files do not exist
   if (!app.fs.existsSync(this.logDir+"/error.csv")) {
-    this.fsError.write(`"Time Stamp","Message"\r\n`);
+    this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
   }
   if (!app.fs.existsSync(this.logDir+"/request.csv")) {
-    this.fsRequest.write(`"Time Stamp","session","Request","Method","URL"\r\n`);
+    this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
   }
   if (!app.fs.existsSync(this.logDir+"/response.csv")) {
     this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
@@ -95,16 +95,22 @@ async createLogStreams(logDir) {
 
 
 //  logClass - server-side
-error(msg) {
+error(msg, request, response) {
+  let sessionNumber=null,requestNumber=null;
   // append message to log file
-  this.write( this.fsError, `"${msg}"` );
+  if (response) {
+    // error was from request from user
+    sessionNumber = response.synergyRequest.sessionNumber;
+    requestNumber = response.synergyRequest.requestNumber;
+  }
+  this.write( this.fsError, `"${sessionNumber}","${requestNumber}","${msg}"` );
 }
 
 
 //  logClass - server-side
-request(session,requestNum, request) {
+request(request,response) {
   // append message to log file
-  this.write(this.fsRequest,`"${session}",${requestNum},"${request.method}","${request.url}"`);
+  this.write(this.fsRequest,`${response.synergyRequest.sessionNumber}, ${response.synergyRequest.requestNumber}, "${request.method}","${request.headers.host}","${request.url}"`);
 }
 
 
