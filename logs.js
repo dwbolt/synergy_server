@@ -58,31 +58,42 @@ async createLogStreams(logDir) {
   this.logDir = logDir;
   await app.verifyPath(this.logDir);  // create directory if it does not exist
 
-  // create streams
-  this.fsError    = app.fs.createWriteStream(this.logDir+"/error.csv"   ,{flags: 'a'});
-  this.fsRequest  = app.fs.createWriteStream(this.logDir+"/request.csv" ,{flags: 'a'});
-  this.fsResponse = app.fs.createWriteStream(this.logDir+"/response.csv",{flags: 'a'});
-
   // will be overwriting this file
   this.fileSummary  = this.logDir+"/summary.json";
 
-
   // write CSV headers if the files are empty
-  let stats;
-  stats = await app.fsp.stat(this.logDir+"/error.csv");
-  if (stats.size === 0) {
-    this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
-  }
+  let stats,file;
 
-  stats = await app.fsp.stat(this.logDir+"/request.csv");
-  if (stats.size === 0) {
-    this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
-  }
+  file = this.logDir+"/error.csv";
+  this.fsError    = app.fs.createWriteStream(file,{flags: 'a'}); // will create it
+  this.fsError.on('open', () => {
+    stats = await app.fsp.stat(file);
+    if (stats.size === 0) {
+      // file empty, write the header
+      this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
+    }
+  });
 
-  stats = await app.fsp.stat(this.logDir+"/response.csv");
-  if (stats.size === 0) {
-    this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
-  }
+
+  file = this.logDir+"/request.csv";
+  this.fsRequest  = app.fs.createWriteStream(file ,{flags: 'a'});
+  this.fsRequest.on('open', () => {
+    stats = await app.fsp.stat(file);
+    if (stats.size === 0) {
+      // file empty, write the header
+      this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
+    }
+  });
+
+  file = this.logDir+"/response.csv";
+  this.fsResponse = app.fs.createWriteStream(file,{flags: 'a'});
+  this.fsResponse.on('open', () => {
+    stats = await app.fsp.stat(file);
+    if (stats.size === 0) {
+      // file empty, write the header
+      this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
+    }
+  });
 
   // if summary exist, then load it and init server info
   this.summaryFile = this.logDir + "/summary.json"

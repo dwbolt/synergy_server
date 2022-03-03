@@ -60,6 +60,8 @@ async initSummary(fileName) {
     this.requests   = s.requests;
     this.sessionKey = s.sessionsTotal;
     this.bytesSent  = s.bytesSent;
+  } else {
+    // nothing to read
   }
 }
 

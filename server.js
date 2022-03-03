@@ -337,7 +337,7 @@ async verifyPath(
   try {
     await this.fsp.mkdir(path, {recursive: true});
   } catch (e) {
-    app.logs.error(`server.js verifyPath error = ${e}`);
+    app.logs.error(`erverClass.verifyPath error = ${e}`);
   }
 }
 
