@@ -64,37 +64,6 @@ ready(file) {
   console.log(++this.fileStatus);
 }
 
-/*
-//  logClass - server-side
-async createLogStreams(dir) {
-  // write CSV headers if the files are empty
-  let stats;
-
- can not seem to make headers work reliably - the app.fsp.stat runs before the createWritableStream creates to file some times
-  stats = await app.fsp.stat(dir+"/error.csv");
-  if (stats.size === 0) {
-    // file empty, write the header
-    this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
-  };
-
-  stats = await app.fsp.stat(dir+"/request.csv");
-  if (stats.size === 0) {
-    // file empty, write the header
-    this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
-  }
-
-  stats = await app.fsp.stat(dir+"/response.csv");
-  if (stats.size === 0) {
-    // file empty, write the header
-    this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
-  }
-
-
-  // if summary exist, then load it and init server info
-  //this.summaryFile = this.logDir + "/summary.json"
-  await app.sessions.initSummary(this.summaryFile);
-}
-*/
 
 //  logClass - server-side
 error(msg, request, response) {

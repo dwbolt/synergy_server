@@ -1,7 +1,7 @@
 // web server: static files and and API to webserver
 
 // create server class and load configuration file
-app          = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
+app = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
 
 async function startServer() {
   await app.init();

@@ -39,6 +39,7 @@ module.exports = class serverClass {
 constructor (s_configDir) {
   // native nodejs modules
   this.https    = require('https')      ; // process https requests
+  this.http     = require('http')       ; // process https requests
   this.fsp      = require('fs/promises'); // access local file system
   this.fs       = require('fs')         ; // access local file system
   this.path     = require('path')       ; // used once (maybe use string function insead)
