@@ -39,11 +39,13 @@ constructor () {
     this.sessions     = {};  // open sessions
 }
 
+
 // sessionsClass - server-side
 async initSummary(fileName) {
   // if server restarts in the middle of the day, load the last data and start from there
 
   // make sure there is a file to load
+  try {
   const stats = await app.fsp.stat(fileName);
   if (0 < stats.size ) {
     // will lose any info between last summary write and server re-start
@@ -60,8 +62,9 @@ async initSummary(fileName) {
     this.requests   = s.requests;
     this.sessionKey = s.sessionsTotal;
     this.bytesSent  = s.bytesSent;
-  } else {
-    // nothing to read
+  }} catch (e) {
+    // not going to worry if file is not there
+    // just want to stop error from propagating up
   }
 }
 

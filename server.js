@@ -42,11 +42,10 @@ constructor (s_configDir) {
   this.fsp      = require('fs/promises'); // access local file system
   this.fs       = require('fs')         ; // access local file system
   this.path     = require('path')       ; // used once (maybe use string function insead)
-  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
+//  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
-  this.sessions;  // will point to instance of sessionClass
-  this.logs;      // will point to instance of logsClass
+
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -86,30 +85,16 @@ constructor (s_configDir) {
     }
 }
 
-/*
-,"9":""
-,"0":""
-,"11":""
-,"12":""
-,"13":""
-,"14":""
-,"15":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-,"":""
-*/
+//,"9":"","0":"","11":""
+
+
+//  serverClass - server-side
+async init(){
+  this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
+  this.logs     = new (require('./logs.js'    ));          // logs
+  await this.logs.init();
+}
+
 
 //  serverClass - server-side
 //  public: requests start here
@@ -154,7 +139,7 @@ loadConfiguration(s_configDir) { // private:
       config.hosts[h]  = require(f);
     } catch (e) {
       // con not use logError, the directory to put the error log is located in the the configuration file, and loading it is where the error is.
-      console.log(`server.js loadConfiguration  error=${e}`);
+      app.log.error.log(`server.js loadConfiguration  error=${e}`);
     }
   }
   return config;

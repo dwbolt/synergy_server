@@ -1,19 +1,14 @@
 // web server: static files and and API to webserver
 
 // create server class and load configuration file
-app = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
+app          = new (require('./server.js'))("../configHTTPS");  // class where the work gets done
 
 async function startServer() {
-  // load classes
-  app.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
-  app.logs     = new (require('./logs.js'    ));   // logs
-
-
-  await app.logs.init();
+  await app.init();
 
   // start timers
   setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);  // delete inactive sessions
-  setInterval( app.logs.summary.bind(    app.logs    ), 5000);  // over write daily summary log
+  setInterval(     app.logs.summary.bind(app.logs    ), 5000);  // over write daily summary log
 
   app.logs.error(`server started`);  // only an error if pm2 is restarting sever
 

@@ -29,14 +29,8 @@ module.exports = class logsClass {
 //  logClass - server-side
 constructor () {
   // logging server & domain
-  this.logDir;        // string for location of log file
-
-  this.fsError;      // fs.writeStream  append
-  this.fsRequest;    // fs.writeStream  append
-  this.fsResponse;   // fs.writeStream  append
-  this.summaryFile;  // string for location of log file
+  this.logDir     = app.config.logDir;        // string for location of log file
 }
-
 
 //  logClass - server-side
 // create log files if needed
@@ -44,62 +38,63 @@ async init() {
   // create log directory
   try {
     // creatre a new directory for the day
-    await this.createLogStreams( app.config.logDir +"/"+ new Date().toISOString().substr(0,10) );
+    const dir = app.config.logDir +"/"+ new Date().toISOString().substr(0,10);
+    await app.verifyPath(dir);
+    this.fileStatus = 0;
+
+    this.fsError    = app.fs.createWriteStream(dir + "/error.csv"   , {flags: 'a'});
+    //this.fsError.on('ready',this.ready.bind(this) );
+
+    this.fsRequest  = app.fs.createWriteStream(dir + "/request.csv" , {flags: 'a'});
+    //this.fsRequest.on('ready',this.ready.bind(this) );
+
+    this.fsResponse = app.fs.createWriteStream(dir + "/response.csv", {flags: 'a'});
+    //this.fsResponse.on('ready',this.ready.bind(this) );
+
+    this.summaryFile=                          dir + "/summary.json";  // string for location of log file
+    //await this.createLogStreams(dir);
+    await app.sessions.initSummary(this.summaryFile);
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
     console.log("logClass.init err="+e);
   }
 }
 
-
-//  logClass - server-side
-async createLogStreams(logDir) {
-  // create new logfiles
-  this.logDir = logDir;
-  await app.verifyPath(this.logDir);  // create directory if it does not exist
-
-  // will be overwriting this file
-  this.fileSummary  = this.logDir+"/summary.json";
-
-  // write CSV headers if the files are empty
-  let stats,file;
-
-  file = this.logDir+"/error.csv";
-  this.fsError    = app.fs.createWriteStream(file,{flags: 'a'}); // will create it
-  this.fsError.on('open', () => {
-    stats = await app.fsp.stat(file);
-    if (stats.size === 0) {
-      // file empty, write the header
-      this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
-    }
-  });
-
-
-  file = this.logDir+"/request.csv";
-  this.fsRequest  = app.fs.createWriteStream(file ,{flags: 'a'});
-  this.fsRequest.on('open', () => {
-    stats = await app.fsp.stat(file);
-    if (stats.size === 0) {
-      // file empty, write the header
-      this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
-    }
-  });
-
-  file = this.logDir+"/response.csv";
-  this.fsResponse = app.fs.createWriteStream(file,{flags: 'a'});
-  this.fsResponse.on('open', () => {
-    stats = await app.fsp.stat(file);
-    if (stats.size === 0) {
-      // file empty, write the header
-      this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
-    }
-  });
-
-  // if summary exist, then load it and init server info
-  this.summaryFile = this.logDir + "/summary.json"
-  await app.sessions.initSummary(this.summaryFile);
+ready(file) {
+  console.log(++this.fileStatus);
 }
 
+/*
+//  logClass - server-side
+async createLogStreams(dir) {
+  // write CSV headers if the files are empty
+  let stats;
+
+ can not seem to make headers work reliably - the app.fsp.stat runs before the createWritableStream creates to file some times
+  stats = await app.fsp.stat(dir+"/error.csv");
+  if (stats.size === 0) {
+    // file empty, write the header
+    this.fsError.write(`"Time Stamp","Session","Request","Message"\r\n`);
+  };
+
+  stats = await app.fsp.stat(dir+"/request.csv");
+  if (stats.size === 0) {
+    // file empty, write the header
+    this.fsRequest.write(`"Time Stamp","Session","Request","Method","host","URL"\r\n`);
+  }
+
+  stats = await app.fsp.stat(dir+"/response.csv");
+  if (stats.size === 0) {
+    // file empty, write the header
+    this.fsResponse.write(`"Time Stamp","Session","Request","Start","Last Request","Duration","ip","method","URL","Bytes"\r\n`);
+  }
+
+
+  // if summary exist, then load it and init server info
+  //this.summaryFile = this.logDir + "/summary.json"
+  await app.sessions.initSummary(this.summaryFile);
+}
+*/
 
 //  logClass - server-side
 error(msg, request, response) {
