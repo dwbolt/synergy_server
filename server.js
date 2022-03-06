@@ -73,10 +73,18 @@ constructor (s_configDir) {
     "makersmarket"        : "p=makers-market"
     ,"become-a-member"    : "p=member"
     ,"library"            : "p=library"
-    ,"permaculture-ethics": "p=permaEthics"
+    ,"visit-us"           : "p=visit"
+    ,"donation"           : "p=donate"
+    ,"about-us"           : "p=about"
+
+    ,"sustainable-future-llc" : "p=solar"
+    ,"permaculture-ethics"    : "p=permaEthics"
+    ,"permaculture-principles": "p=permaPrinciples"
+
+    ,"bylaws"             : "synergyData/documents/bylaws.pdf"
 
     ,"makers-market-registration" : "p=makers-market&b=Vendor%20Registration"
-    ,"sustainable-future-llc"     : "p=solar"
+
 
     ,"buy-microgreens"  : "p=page-not-on-website"
     ,"market-music"     : "p=page-not-on-website"
@@ -86,7 +94,6 @@ constructor (s_configDir) {
     }
 }
 
-//,"9":"","0":"","11":""
 
 
 //  serverClass - server-side
