@@ -125,7 +125,7 @@ requestIn(
   } else {
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
-    response.end(`error logged`);
+    this.sessions.responseEnd(`server is not configured for domain ${host}`);
     app.logs.error(`configuration file: ${host}.json not found`,request,response);
   }
 }
