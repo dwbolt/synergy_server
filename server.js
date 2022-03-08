@@ -196,14 +196,17 @@ async serveFile(request, response) { // private:serve static file. could be html
     // find root server path
     if (subAppConfig) {
         filePath = subAppConfig.filePath;
-        // take of subApp part of url
+        // take off subApp part of url
         url = url.substr(subApp.length+1);
+        if (subApp === "users") {
+          // make sure they are logged in and add their subdirectory
+          filePath += "/"+ this.sessions.getUserPath(response);
+        }
     } else {
-        filePath = this.config.hosts[hostName].filePath;
+      filePath = this.config.hosts[hostName].filePath;
     }
 
-    // complete server path to file
-    filePath += url;
+  filePath += url;
 
   // server file
   var extname = String(this.path.extname(filePath)).toLowerCase();
@@ -212,7 +215,6 @@ async serveFile(request, response) { // private:serve static file. could be html
   let content;
   try {
       content = await this.fsp.readFile(filePath);
-    //  response.setHeader('Cache-Control', 'max-age=300');
       response.setHeader('Cache-Control', `${app.config.CacheControl}`);
       response.writeHead(200, { 'Content-Type': contentType });
   } catch (e) {
@@ -227,7 +229,7 @@ async serveFile(request, response) { // private:serve static file. could be html
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
         content = 'Sorry, check with the site admin for error: ' +e.code;
-        this.logError(content);
+        this.logError(`app.serveFile() err=${e.code}`);
     }
   }
 
@@ -334,6 +336,10 @@ async verifyPath(
   }
 }
 
+// class server return user data
+userData(){
+
+}
 
 //  serverClass - server-side
 } //////// end of class

@@ -105,7 +105,7 @@ log(
 initSession(
   sessionKey  // sessionKey ->
 ) {
-  this.sessions[sessionKey] = {requests:[]};
+  this.sessions[sessionKey] = {"user":"", "requests":[]};
 }
 
 
@@ -169,12 +169,18 @@ login(
     response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
     this.responseEnd(response,`{"msg":true, "nameFirst":"${this.users[user].nameFirst}", "nameLast":"${this.users[user].nameLast}"}`);
     // store user with their session
-    // to be done
+    this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
   } else {
     this.responseEnd(response,'{"msg":false}');
   }
 }
 
+
+// sessionsClass - server-side
+getUserPath(response){
+  // return the logged in users data path 
+  return this.sessions[response.synergyRequest.sessionNumber].user.userDir;
+}
 
 // sessionsClass - server-side
 logout(
