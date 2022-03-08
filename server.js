@@ -99,7 +99,7 @@ constructor (s_configDir) {
 //  serverClass - server-side
 async init(){
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
-  this.logs     = new (require('./logs.js'    ));          // logs
+  this.logs     = new (require('./logs.js'    ));   // logs
   await this.logs.init();
 }
 
@@ -229,11 +229,50 @@ async serveFile(request, response) { // private:serve static file. could be html
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
         content = 'Sorry, check with the site admin for error: ' +e.code;
-        this.logError(`app.serveFile() err=${e.code}`);
+        this.logs.error(`app.serveFile() err=${e.code}`);
     }
   }
 
   app.sessions.responseEnd(response, content);
+}
+
+
+
+// class server - server-side
+
+// obj      ->  message
+// obj.dir  ->  path with filename
+// obj.data ->
+// request  ->
+// response
+async uploadFile(
+  obj
+  , request
+  , response
+  ) {
+  const hostName     = request.headers.host.split(":")[0];
+
+  // verify obj.dir starts with "/users/ and strip that off
+  if (        obj.dir.substring(0,7) === "/users/") {
+    obj.dir = obj.dir.substring(7);
+  } else {
+    // error, only allow upload to user space
+    this.logs.error(`server.js uploadFile client tried uploading ${obj.dir}`);
+    this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
+  }
+
+  const subAppConfig = this.config.hosts[hostName].subApps[ "users"];  // only allow upload to user area
+  const directory = `${subAppConfig.filePath}`;
+  let path = `${directory}/${this.sessions.getUserPath(response)}/${obj.dir}`;
+
+  try {
+   await this.verifyPath(path) // create file path if it does not exists
+   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
+   this.sessions.responseEnd(response,'{"success":true, "message":"file uploaded"}');
+  } catch (e) {
+    this.logs.error(`server.js uploadFile error = ${e}`);
+    this.sessions.responseEnd(response,`{"success":false, "message":"error = ${e}"}`);
+  }
 }
 
 
@@ -271,7 +310,7 @@ POST(
     try {
       var obj = JSON.parse(body);
     } catch (e) {
-        this.logError(`Error server.js- JSON.parse = ${obj.server}`);
+        this.logs.error(`Error server.js- JSON.parse = ${obj.server}`);
       return;
     }
 
@@ -288,38 +327,6 @@ POST(
         app.logs.error(`Error server.js POST obj.server = ${obj.server}`, request, response);
     }
   });
-}
-
-
-// class server
-// added 2021-06-19 to save files for accounting app.
-
-// obj      ->  message
-// obj.path ->
-// obj.name ->
-// obj.extension ->
-// obj.data ->
-// request  ->
-// response
-async uploadFile(
-  obj
-  , request
-  , response) {
-  const hostName     = request.headers.host.split(":")[0];
-  const subAppConfig = this.config.hosts[hostName].subApps[ obj.virDir ];  // try to get config for an application
-  let directory      = `${this.config.hosts[hostName].filePath}`;
-  if (subAppConfig) {
-    directory = `${subAppConfig.filePath}`;
-  }
-
-  const path = `${directory}/${obj.app}/${obj.dir}`;
-
-  try {
-   await this.verifyPath(path) // create file path if it does not exists
-   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
-  } catch (e) {
-    this.logError(`server.js uploadFile error = ${e}`);
-  }
 }
 
 
