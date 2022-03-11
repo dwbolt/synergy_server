@@ -252,7 +252,7 @@ async serveFile(request, response) { // private:serve static file. could be html
         content = `
           <meta http-equiv="Refresh" content="0; url='/app.html?p=page-server-error'" />
           <p>Redirect to new url</p>`;
-        this.logs.error(`app.serveFile() err=${e.code}`);
+        this.logs.error(`app.serveFile() err=${e.code} file=${filePath}`);
     }
   }
 
