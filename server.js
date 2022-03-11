@@ -46,7 +46,15 @@ constructor (s_configDir) {
 //  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
+/*
+,"maxSessionAge" : {"minutes": 25, "seconds": 10}  time that server will keep session open after last interaction"}
+,"CacheControl": "max-age=30"                                // number of seconds files are cached on local machine, low number for dev, higher number for production
 
+,"logDir"   : "../../domains/alpha.sfcknox.org/logsHTTPS"    // where logs are kept
+,"userDir"  : "../"                                          // where users.json lives, hav authentication information
+,"localDir" : "../../3-local-storage"                        // for people running a local server on their machine, this is where there local data is stored,  if they run on multiple machines they can sync this data
+
+*/
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -175,43 +183,56 @@ redirect(request, response) {
 
 
 //  serverClass - server-side
+getFilePath(request,response) {
+  const hostName     = request.headers.host.split(":")[0];            // just want hostname, without port #
+  const subApp       = request.url.split("/")[1];                     // get the directory or application name
+  const subAppConfig = this.config.hosts[hostName].subApps[ subApp ]; // try to get config for an application
+
+  // create file ref from url
+  let url = request.url;
+  if (url.indexOf('?') > -1) {
+    // remove any parametes on url
+    url = url.slice(0,url.indexOf('?'));
+  }
+  if (url[url.length-1] === "/") {
+    // add default html file if only a directory is given
+    url += "app.html"
+  }
+
+  // find root server path
+  let filePath;
+  if (subAppConfig) {
+      filePath = subAppConfig.filePath;
+      // take off subApp part of url
+      url = url.substr(subApp.length+1);
+      if (subApp === "users") {
+        // make sure they are logged in and add their subdirectory
+        filePath += "/"+ this.sessions.getUserPath(response);
+      }
+  } else {
+    filePath = this.config.hosts[hostName].filePath;
+  }
+
+  return filePath+url;
+}
+
+
+// sessionsClass - server-side
+getSubAppPath(subApp,request){
+  const hostName = request.headers.host.split(":")[0];            // just want hostname, without port #
+  return  this.config.hosts[hostName].subApps[ subApp ].filePath; // try to get config for an application
+}
+
+
+//  serverClass - server-side
 async serveFile(request, response) { // private:serve static file. could be html, JSON, etc
-    // serve the default application
-    const hostName     = request.headers.host.split(":")[0];             // just want hostname, without port #
-    const subApp       = request.url.split("/")[1];                      // get the directory or application name
-    const subAppConfig = this.config.hosts[hostName].subApps[ subApp ];  // try to get config for an application
-    let filePath;
+  const filePath = this.getFilePath(request, response);
 
-    // create file ref from url
-    let url = request.url;
-    if (url.indexOf('?') > -1) {
-      // remove any parametes on url
-      url = url.slice(0,url.indexOf('?'));
-    }
-    if (url[url.length-1] === "/") {
-      // add default html file if only a directory is given
-      url += "app.html"
-    }
-
-    // find root server path
-    if (subAppConfig) {
-        filePath = subAppConfig.filePath;
-        // take off subApp part of url
-        url = url.substr(subApp.length+1);
-        if (subApp === "users") {
-          // make sure they are logged in and add their subdirectory
-          filePath += "/"+ this.sessions.getUserPath(response);
-        }
-    } else {
-      filePath = this.config.hosts[hostName].filePath;
-    }
-
-  filePath += url;
-
-  // server file
+  // lookup mimeType
   var extname = String(this.path.extname(filePath)).toLowerCase();
   var contentType = this.mimeTypes[extname] || 'text/html';
 
+  // server file
   let content;
   try {
       content = await this.fsp.readFile(filePath);
@@ -224,11 +245,13 @@ async serveFile(request, response) { // private:serve static file. could be html
         content = `
           <meta http-equiv="Refresh" content="0; url='/app.html?p=page-not-found'" />
           <p>Redirect to new url</p>`;
-        app.logs.error(`file not found - ${filePath}`,request, response);
+        app.logs.error(`app.serveFile() file not found - ${filePath}`,request, response);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
         response.writeHead(500);
-        content = 'Sorry, check with the site admin for error: ' +e.code;
+        content = `
+          <meta http-equiv="Refresh" content="0; url='/app.html?p=page-server-error'" />
+          <p>Redirect to new url</p>`;
         this.logs.error(`app.serveFile() err=${e.code}`);
     }
   }

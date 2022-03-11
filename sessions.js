@@ -158,29 +158,45 @@ responseEnd(
 
 // sessionsClass - server-side
 // public, used to login from html page
-login(
+async login(
    clientMsg // message from client
   ,request   // HTTPS request
   ,response  // HTTPS response
 ){
   const user = clientMsg.user;
-
-  if (this.users[user] && this.users[user].pwdDigest === clientMsg.pwdDigest) {
-    response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
-    this.responseEnd(response,`{"msg":true, "nameFirst":"${this.users[user].nameFirst}", "nameLast":"${this.users[user].nameLast}"}`);
-    // store user with their session
-    this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
-  } else {
-    this.responseEnd(response,'{"msg":false}');
-  }
+  // see if user
+   if (!this.users[user]) {
+      // user is not in users.json, login failed
+      this.responseEnd(response,'{"msg":false}');
+   } else  {
+     // try to load user.json from user's directtory
+     const userDir = this.users[user];
+     const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
+     try {
+       const json = require(file);
+       if (json.pwdDigest === clientMsg.pwdDigest) {
+        // login successful
+        response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
+        this.responseEnd(response,`{"msg":true, "nameFirst":"${json.nameFirst}", "nameLast":"${json.nameLast}"}`);
+        // store user with their session
+        this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
+      } else {
+        this.responseEnd(response,'{"msg":false}');
+      }
+     } catch (e) {
+       app.logs.error(`sessions.login open ${file} error=${e}`  ,request,response)
+       this.responseEnd(response,'{"msg":false}');
+     }
+   }
 }
 
 
 // sessionsClass - server-side
-getUserPath(response){
-  // return the logged in users data path 
-  return this.sessions[response.synergyRequest.sessionNumber].user.userDir;
+getUserPath(response) {
+  // return the logged in users data path
+  return this.sessions[response.synergyRequest.sessionNumber].user;
 }
+
 
 // sessionsClass - server-side
 logout(
