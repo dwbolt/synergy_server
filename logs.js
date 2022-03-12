@@ -81,7 +81,7 @@ error(msg, request, response) {
 //  logClass - server-side
 request(request,response) {
   // append message to log file
-  this.write(this.fsRequest,`${response.synergyRequest.sessionNumber}, ${response.synergyRequest.requestNumber}, "${request.method}","${request.headers.host}","${request.url}"`);
+  this.write(this.fsRequest,`${response.synergyRequest.sessionNumber},${response.synergyRequest.requestNumber},"${request.method}","${request.headers.host}","${request.url}"`);
 }
 
 
