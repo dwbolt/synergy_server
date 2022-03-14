@@ -3,7 +3,7 @@
 Would like to store logs of user interactions.   For example save in accounting. should append all user interaction file, or open write and close
 
 2 to 3 times faster to do multiple writes.
-12-20 times faster to stream data 
+12-20 times faster to stream data
 
 */
 
@@ -24,14 +24,19 @@ constructor (s_configDir) {
 async main() {
   await this.verifyPath(this.dir );
 
-  const dur1 = await this.test("1");
-  const dur2 = await this.test("2");
-  const dur3 = await this.test("3");
+  const dur1 = await this.test("1","await for each file creation");
+  console.log("");
+
+  const dur2 = await this.test("2","start creation process for all files, await completion of all");
   console.log(dur1/dur2);
+  console.log("");
+
+  const dur3 = await this.test("3","only create one file, use file sream append");
   console.log(dur1/dur3)
+  console.log("");
 }
 
-async test(testNumber){
+async test(testNumber, msg){
   // wait for each write to finish
   const start = new Date();
   const dir = this.dir+"/test"+testNumber;
@@ -41,7 +46,7 @@ async test(testNumber){
 
   const end = new Date();
   const dur = end-start;
-  console.log(`test 1 duration=${dur}`);
+  console.log(`duration=${dur} ${msg}`);
   return dur;
 }
 
