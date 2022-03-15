@@ -1,7 +1,7 @@
 // web server: static files and and API to webserver
 
 // create server class and load configuration file
-app = new (require('./server.js'))("../Config/configHTTPS");  // class where the work gets done
+app = new (require('./server.js'))("../config/configHTTPS");  // class where the work gets done
 
 async function startServer() {
   await app.init();
@@ -16,9 +16,9 @@ async function startServer() {
   app.https.createServer(
     {
     // https certificates for encription
-    key:  app.fs.readFileSync('../Config/certificates/private.key.pem')
-   ,cert: app.fs.readFileSync('../Config/certificates/domain.cert.pem')
-   ,ca:   app.fs.readFileSync('../Config/certificates/intermediate.cert.pem')
+    key:  app.fs.readFileSync('../config/certificates/private.key.pem')
+   ,cert: app.fs.readFileSync('../config/certificates/domain.cert.pem')
+   ,ca:   app.fs.readFileSync('../config/certificates/intermediate.cert.pem')
     },app.requestIn.bind(app)
   ).listen(app.config.port);
 
