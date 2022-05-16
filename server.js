@@ -269,7 +269,7 @@ async serveFile(request, response) { // private:serve static file. could be html
 // request  ->
 // response
 async uploadFile(
-  obj
+  obj   //
   , request
   , response
   ) {
@@ -299,11 +299,30 @@ async uploadFile(
 }
 
 
+async userFile(obj, request, response) {
+
+}
+
 //  serverClass - server-side
-// obj
-// request
-// response
-web(obj, request, response) {  // private: process request
+async web(// private: process request
+   obj
+  ,request
+  ,response) {
+  switch (obj.msg) {
+  case "login":
+    this.sessions.login(obj, request, response);
+    break;
+  case "logout":
+    this.sessions.logout(obj, request, response);
+    break;
+  case "uploadFile":
+    await this.uploadFile(     obj, request, response);
+    break;
+  default:
+    app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
+  }
+
+  /*
   if        ( typeof( this[         obj.msg] )=== "function") {
     // there is a serverClass method
     this[obj.msg](         obj, request, response);
@@ -314,6 +333,7 @@ web(obj, request, response) {  // private: process request
     // get error to user, add to server log
     app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
   }
+  */
 }
 
 
