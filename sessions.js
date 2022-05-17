@@ -204,7 +204,10 @@ logout(
   ,request   // HTTPS request
   ,response  // HTTPS response
 ) {
-  // remove user from their session
+  // remove user from their session on server
+  delete this.sessions[response.synergyRequest.sessionNumber].user;
+
+  // remove user from their session on client
   response.setHeader('Set-Cookie', [ `userKey=;path="/"`]);
   this.responseEnd(response,'{"msg":true}');
 }
