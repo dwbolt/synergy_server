@@ -264,7 +264,7 @@ async serveFile(request, response) { // private:serve static file. could be html
 // class server - server-side
 
 // obj      ->  message
-// obj.dir  ->  path with filename
+// obj.path  ->  path with filename
 // obj.data ->
 // request  ->
 // response
@@ -275,22 +275,22 @@ async uploadFile(
   ) {
   const hostName     = request.headers.host.split(":")[0];
 
-  // verify obj.dir starts with "/users/ and strip that off
-  if (        obj.dir.substring(0,7) === "/users/") {
-    obj.dir = obj.dir.substring(7);
+  // verify obj.path starts with "/users/ and strip that off
+  if (        obj.path.substring(0,7) === "/users/") {
+    obj.path = obj.path.substring(7);
   } else {
     // error, only allow upload to user space
-    this.logs.error(`server.js uploadFile client tried uploading ${obj.dir}`);
+    this.logs.error(`server.js uploadFile client tried uploading ${obj.path}`);
     this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
   }
 
   const subAppConfig = this.config.hosts[hostName].subApps[ "users"];  // only allow upload to user area
   const directory = `${subAppConfig.filePath}`;
-  let path = `${directory}/${this.sessions.getUserPath(response)}/${obj.dir}`;
+  let path = `${directory}/${this.sessions.getUserPath(response)}/${obj.path}`;
 
   try {
    await this.verifyPath(path) // create file path if it does not exists
-   await this.fsp.writeFile(path, obj.data); // save the file using app.fs.writeFile
+   await this.fsp.writeFile(`${path}/${obj.name}`, obj.data); // save the file using app.fs.writeFile
    this.sessions.responseEnd(response,'{"success":true, "message":"file uploaded"}');
   } catch (e) {
     this.logs.error(`server.js uploadFile error = ${e}`);
