@@ -262,16 +262,16 @@ async serveFile(request, response) { // private:serve static file. could be html
 
 
 // class server - server-side
-
-// obj      ->  message
-// obj.path  ->  path with filename
-// obj.data ->
-// request  ->
-// response
-async uploadFile(
-  obj   //
-  , request
-  , response
+async uploadFile(  // not tested for binary files
+  obj   // obj      ->  message
+  /*  {"server":"web"
+    ,"msg":"uploadFile"
+    ,"path":"/users/server/download"
+    ,"name":"test.json"
+    ,"data":"${data}"
+  }*/
+  , request  // request  ->
+  , response // response
   ) {
   const hostName     = request.headers.host.split(":")[0];
 
