@@ -268,6 +268,7 @@ async uploadFile(  // not tested for binary files
     ,"msg":"uploadFile"
     ,"path":"/users/server/download"
     ,"name":"test.json"
+    ,"dataType": "json"
     ,"data":"${data}"
   }*/
   , request  // request  ->
@@ -290,6 +291,10 @@ async uploadFile(  // not tested for binary files
 
   try {
    await this.verifyPath(path) // create file path if it does not exists
+   if (typeof(obj.data) === "object") {
+     // assume data is json and convert to string
+     obj.data = JSON.stringify(obj.data);
+   }
    await this.fsp.writeFile(`${path}/${obj.name}`, obj.data); // save the file using app.fs.writeFile
    this.sessions.responseEnd(response,'{"success":true, "message":"file uploaded"}');
   } catch (e) {
