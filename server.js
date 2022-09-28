@@ -150,11 +150,12 @@ loadConfiguration(s_configDir) { // private:
   for(var h in config.hosts) {
     // load all domain configurations contained in _config.json
     try {
-      const f = `./${s_configDir}/${h}.json`;
-      console.log('loading configfile: '+ f);
+      const f = `./${s_configDir}/${config.hosts[h]}.json`;
+      console.log(`domain:   ${h}`);
+      console.log(`  loading ${f}`);
       config.hosts[h]  = require(f);
     } catch (e) {
-      // con not use logError, the directory to put the error log is located in the the configuration file, and loading it is where the error is.
+      // can not use logError, the directory to put the error log is located in the the configuration file, and loading it is where the error is.
       app.log.error.log(`server.js loadConfiguration  error=${e}`);
     }
   }
