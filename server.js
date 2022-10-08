@@ -343,10 +343,10 @@ async web(// private: process request
 }
 
 
-//  serverClass - server-side
+
 // private:
-POST(
-   request  // request ->
+POST(        // serverClass - server-side
+   request   // request ->
   ,response  // response ->
 ) {
   let body = '';
@@ -359,7 +359,7 @@ POST(
     try {
       var obj = JSON.parse(body);
     } catch (e) {
-        this.logs.error(`Error server.js- JSON.parse = ${obj.server}`);
+        this.logs.error(`serverClass.POST - body = ${body}`);
       return;
     }
 
