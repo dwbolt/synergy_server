@@ -64,6 +64,7 @@ constructor (s_configDir) {
       '.pdf' : 'application/pdf',
       '.png' : 'image/png',
       '.jpg' : 'image/jpg',
+      '.ico' : 'image/x-icon',
       '.gif' : 'image/gif',
       '.wav' : 'audio/wav',
       '.mp4' : 'video/mp4',
