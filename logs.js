@@ -43,16 +43,10 @@ async init() {
     this.fileStatus = 0;
 
     this.fsError    = app.fs.createWriteStream(dir + "/error.csv"   , {flags: 'a'});
-    //this.fsError.on('ready',this.ready.bind(this) );
-
     this.fsRequest  = app.fs.createWriteStream(dir + "/request.csv" , {flags: 'a'});
-    //this.fsRequest.on('ready',this.ready.bind(this) );
-
     this.fsResponse = app.fs.createWriteStream(dir + "/response.csv", {flags: 'a'});
-    //this.fsResponse.on('ready',this.ready.bind(this) );
-
     this.summaryFile=                          dir + "/summary.json";  // string for location of log file
-    //await this.createLogStreams(dir);
+
     await app.sessions.initSummary(this.summaryFile);
   } catch (e) {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
@@ -104,6 +98,7 @@ async summary() {
 ,"sessionsTotal"   : ${o.sessionKey}
 ,"requestsOpen"    : ${o.openRequests.length}
 ,"sesstionsActive" : ${Object.keys(o.sessions).length}
+,"headerUndefined" : ${o.headerUndefined}
 }`
 
   // overwrite state of server to logfile

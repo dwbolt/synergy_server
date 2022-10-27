@@ -110,6 +110,12 @@ requestIn(
    request
   ,response
 ) {
+  if (typeof(request.headers.host) === "undefined") {
+    // not sure how a request can come in withoht a host, but about 6 a day come in and crash the server.  This prevents the requests from crashing the server
+    app.sessions.headerUndefined++; // keep track of how many come in
+    return;   // do not process request
+  }
+
   this.sessions.log(request, response);   // log request in memory and in log files. Also add cookies for sessionKey and serverStart to response
 
   // make sure configuration file for web is loaded

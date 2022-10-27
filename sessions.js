@@ -29,11 +29,12 @@ constructor () {
     this.users        = require(`${app.config.userDir}/users.json`);
 
     // requests
-    this.requests     = 0    // increment each time a request comes in
-    this.openRequests = [];  // Requests that are still processing
-    this.lastRequest  =  Date.now();   // see how hard server is being hit
-    this.sessionKey   = 0;   // increment each time a new session is started
-    this.bytesSent    = 0;   // total bytes sent to clients since server started
+    this.requests        = 0    // increment each time a request comes in
+    this.openRequests    = [];  // Requests that are still processing
+    this.lastRequest     =  Date.now();   // see how hard server is being hit
+    this.sessionKey      = 0;   // increment each time a new session is started
+    this.bytesSent       = 0;   // total bytes sent to clients since server started
+    this.headerUndefined = 0;   // keep track of how many undefined header requests come in, we ignor them
 
     // open sessions
     this.sessions     = {};  // open sessions
@@ -56,6 +57,7 @@ async initSummary(fileName) {
     ,"requests"        : 83
     ,"sessionsTotal"   : 35
     ,"sesstionsActive" : 2
+    ,"headerUndefined" : 5
     */
     const str  = await app.fsp.readFile(fileName);
     const s    = JSON.parse(str);
