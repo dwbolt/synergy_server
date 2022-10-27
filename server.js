@@ -46,15 +46,6 @@ constructor (s_configDir) {
 //  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
-/*
-,"maxSessionAge" : {"minutes": 25, "seconds": 10}  time that server will keep session open after last interaction"}
-,"CacheControl": "max-age=30"                                // number of seconds files are cached on local machine, low number for dev, higher number for production
-
-,"logDir"   : "../../domains/alpha.sfcknox.org/logsHTTPS"    // where logs are kept
-,"userDir"  : "../"                                          // where users.json lives, hav authentication information
-,"localDir" : "../../3-local-storage"                        // for people running a local server on their machine, this is where there local data is stored,  if they run on multiple machines they can sync this data
-
-*/
 
   this.mimeTypes = {
       '.html': 'text/html',
