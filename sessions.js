@@ -9,6 +9,7 @@ log(request,response) called from server.js when server request first comes in
 responseEnd(response, content)
 login(clientMsg, request, response)
 logout()
+changePWD
 cleanUp()                      run on timer
 parseCookies(request)          put cookies in an object so that they can be accessed
 
@@ -176,7 +177,7 @@ async login(
      const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
      try {
        const json = require(file);
-       if (json.pwdDigest === clientMsg.pwdDigest) {
+       if (json.pwdDigest === this.string2digestBase64(clientMsg.pwd)) {
         // login successful
         response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
         this.responseEnd(response,`{"msg":true, "nameFirst":"${json.nameFirst}", "nameLast":"${json.nameLast}"}`);
@@ -193,8 +194,57 @@ async login(
 }
 
 
-// sessionsClass - server-side
-getUserPath(response) {
+async changePWD(
+   clientMsg // message from client
+  ,request   // HTTPS request
+  ,response  // HTTPS response
+){
+  const user = clientMsg.user;
+  // see if user
+   if (!this.users[user]) {
+      // user is not in users.json, login failed
+      this.responseEnd(response,'{"msg":false}');
+   } else  {
+     // try to load user.json from user's directtory
+     const userDir = this.users[user];
+     const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
+     try {
+       const json = require(file);
+       const digest = this.string2digestBase64(clientMsg.pwd);
+       if (json.pwdDigest === digest) {
+        // store s_digest
+        json.pwdDigest = this.string2digestBase64(clientMsg.pwdNew);
+        await app.fsp.writeFile(file, JSON.stringify(json)); // save the file using app.fs.writeFile
+
+        // login successful
+        //response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
+        this.responseEnd(response,`{"msg":true, "comment":"password changed"}`);
+        // store user with their session
+        //this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
+      } else {
+        this.responseEnd(response,'{"msg":false}');
+      }
+     } catch (e) {
+       app.logs.error(`sessions.login open ${file} error=${e}`  ,request,response)
+       this.responseEnd(response,'{"msg":false}');
+     }
+   }
+}
+
+
+string2digestBase64(  // sessionsClass - server-side
+  // convert string to digest base64 string
+  // passwords are not stored on the server, only the digest of the password
+  s_pwd // string -
+) {
+  var    crypto = require('crypto');
+  const  digest = crypto.createHash('sha256').update(s_pwd).digest('base64');
+  return digest;
+}
+
+
+getUserPath( // sessionsClass - server-side
+  response) {
   // return the logged in users data path
   return this.sessions[response.synergyRequest.sessionNumber].user;
 }

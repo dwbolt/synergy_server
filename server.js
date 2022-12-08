@@ -319,27 +319,16 @@ async web(// private: process request
   case "logout":
     this.sessions.logout(obj, request, response);
     break;
+  case "changePWD":
+    this.sessions.changePWD(obj, request, response);
+    break;
   case "uploadFile":
     await this.uploadFile(     obj, request, response);
     break;
   default:
     app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
   }
-
-  /*
-  if        ( typeof( this[         obj.msg] )=== "function") {
-    // there is a serverClass method
-    this[obj.msg](         obj, request, response);
-  } else if ( typeof( this.sessions[obj.msg] ) === "function") {
-    // there is a sessionsClass method
-    this.sessions[obj.msg](obj, request, response);
-  } else {
-    // get error to user, add to server log
-    app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
-  }
-  */
 }
-
 
 
 // private:
