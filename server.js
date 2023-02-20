@@ -314,17 +314,22 @@ async web(// private: process request
   ,response) {
   switch (obj.msg) {
   case "login":
-    this.sessions.login(obj, request, response);
+    this.sessions.login(       obj, request, response);
     break;
   case "logout":
-    this.sessions.logout(obj, request, response);
+    this.sessions.logout(       obj, request, response);
     break;
   case "changePWD":
-    this.sessions.changePWD(obj, request, response);
+    this.sessions.changePWD(    obj, request, response);
     break;
+  case "addUser":
+    await this.sessions.addUser(obj, request, response );
+    break;
+
   case "uploadFile":
     await this.uploadFile(     obj, request, response);
     break;
+
   default:
     app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
   }

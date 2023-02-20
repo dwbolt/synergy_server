@@ -19,9 +19,7 @@ parseCookies(request)          put cookies in an object so that they can be acce
 // sessionsClass - server-side
 module.exports = class sessionsClass {
 
-
-// sessionsClass - server-side
-constructor () {
+constructor () {  // sessionsClass - server-side
     // used to see current state of the server in real time . the logfile logSummary is overwritten every cleanUp cycle
     // static
     this.serverStart  = Date.now();
@@ -42,8 +40,8 @@ constructor () {
 }
 
 
-// sessionsClass - server-side
-async initSummary(fileName) {
+async initSummary( // sessionsClass - server-side
+  fileName) {
   // if server restarts in the middle of the day, load the last data and start from there
 
   // make sure there is a file to load
@@ -159,9 +157,9 @@ responseEnd(
 }
 
 
-// sessionsClass - server-side
+
 // public, used to login from html page
-async login(
+async login( // sessionsClass - server-side
    clientMsg // message from client
   ,request   // HTTPS request
   ,response  // HTTPS response
@@ -194,7 +192,7 @@ async login(
 }
 
 
-async changePWD(
+async changePWD( // sessionsClass - server-side
    clientMsg // message from client
   ,request   // HTTPS request
   ,response  // HTTPS response
@@ -231,6 +229,29 @@ async changePWD(
    }
 }
 
+
+async addUser( // sessionsClass - server-side
+   clientMsg // message from client
+ , request    // HTTPS request
+ , response   // HTTPS response
+) {
+
+    // add user to json 
+    const userDir = `${clientMsg.nameLast},${clientMsg.nameFirst}`;
+    this.users[clientMsg.user] = userDir;
+    // save 
+    await app.fsp.writeFile(`${app.config.userDir}users.json`, JSON.stringify(this.users));
+
+    // add  user json file with salted passord
+    const userData= `{
+      "nameFirst" : "${clientMsg.nameFirst}"
+      ,"nameLast" : "${clientMsg.nameLast}"
+      ,"pwdDigest": "${this.string2digestBase64(clientMsg.pwd)}"
+      ,"phone"    : "${clientMsg.phone}"
+      ,"email"    : "${clientMsg.email}"
+    }`
+    await app.fsp.writeFile(`${app.getSubAppPath("users",request)}/${userDir}/user.json`, userData);
+}
 
 string2digestBase64(  // sessionsClass - server-side
   // convert string to digest base64 string
