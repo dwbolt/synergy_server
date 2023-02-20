@@ -251,6 +251,7 @@ async addUser( // sessionsClass - server-side
       ,"email"    : "${clientMsg.email}"
     }`
     await app.fsp.writeFile(`${app.getSubAppPath("users",request)}/${userDir}/user.json`, userData);
+    this.responseEnd(response,`{"msg":true, "comment":"User Added"}`);
 }
 
 string2digestBase64(  // sessionsClass - server-side
