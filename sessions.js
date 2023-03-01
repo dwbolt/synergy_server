@@ -236,23 +236,45 @@ async addUser( // sessionsClass - server-side
  , response   // HTTPS response
 ) {
 
+  // see if user already exists
+  if (this.users[clientMsg.user]) {
+     // let client browser know that the user was not added
+    this.responseEnd(response,`{"msg":false, "comment":"User ${clientMsg.user} already exists"}`);
+    return;
+  }
+
     // add user to json 
-    const userDir = `${clientMsg.nameLast},${clientMsg.nameFirst}`;
+    const year = new Date().getFullYear().toString();
+    let next   = this.users[year] || 1;  // init to 1 if no users exixt for current year
+
+    const userDir = `${year}/${next}-${clientMsg.nameLast},${clientMsg.nameFirst}`;
     this.users[clientMsg.user] = userDir;
-    // save 
+    this.users[year] = ++next;  // increment the next userer number
+
+    // save updated user file to file
     await app.fsp.writeFile(`${app.config.userDir}users.json`, JSON.stringify(this.users));
 
-    // add  user json file with salted passord
-    const userData= `{
-      "nameFirst" : "${clientMsg.nameFirst}"
-      ,"nameLast" : "${clientMsg.nameLast}"
-      ,"pwdDigest": "${this.string2digestBase64(clientMsg.pwd)}"
-      ,"phone"    : "${clientMsg.phone}"
-      ,"email"    : "${clientMsg.email}"
+    // copy user timeplate direcory to new user directory
+    const usersDir = app.getSubAppPath("users",request);
+    await app.fsp.cp(`${usersDir}/_template`, `${usersDir}/${userDir}`, {recursive: true})
+
+    // add user json file with salted passord
+    const userData = `
+    {
+       "user"      : "${clientMsg.user}"
+      ,"nameFirst" : "${clientMsg.nameFirst}"
+      ,"nameLast"  : "${clientMsg.nameLast}"
+      ,"pwdDigest" : "${this.string2digestBase64(clientMsg.pwd)}"
+      ,"phone"     : "${clientMsg.phone}"
+      ,"email"     : "${clientMsg.email}"
     }`
-    await app.fsp.writeFile(`${app.getSubAppPath("users",request)}/${userDir}/user.json`, userData);
-    this.responseEnd(response,`{"msg":true, "comment":"User Added"}`);
+    await app.fsp.writeFile(`${usersDir}/${userDir}/user.json`, userData);
+
+
+    // reposond to browser client
+    this.responseEnd(response,`{"msg":true, "comment":"User ${clientMsg.user} Added"}`);
 }
+
 
 string2digestBase64(  // sessionsClass - server-side
   // convert string to digest base64 string
@@ -260,7 +282,7 @@ string2digestBase64(  // sessionsClass - server-side
   s_pwd // string -
 ) {
   var    crypto = require('crypto');
-  const  digest = crypto.createHash('sha256').update(s_pwd).digest('base64');
+  const  digest = crypto.createHash('sha256').update(s_pwd).digest('base64');  // salt not yet added
   return digest;
 }
 
