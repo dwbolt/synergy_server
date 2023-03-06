@@ -1,4 +1,6 @@
-/*
+module.exports = class serverClass {   //  serverClass - server-side
+
+  /*
 
 small web server that serves static files and supports an:
 
@@ -31,9 +33,6 @@ Each time the server starts and new log directory is created with the name:  YYY
     number of unique users
 */
 
-//  serverClass - server-side
-module.exports = class serverClass {
-
 
 //  serverClass - server-side
 constructor (s_configDir) {
@@ -43,6 +42,8 @@ constructor (s_configDir) {
   this.fsp      = require('fs/promises'); // access local file system
   this.fs       = require('fs')         ; // access local file system
   this.path     = require('path')       ; // used once (maybe use string function insead)
+
+
 //  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
   this.config   = this.loadConfiguration(s_configDir);
@@ -95,20 +96,18 @@ constructor (s_configDir) {
 }
 
 
-
-//  serverClass - server-side
-async init(){
+async init(){  //  serverClass - server-side
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
   this.logs     = new (require('./logs.js'    ));   // logs
+  this.sync     = new (require('./sync.js'    ));   // support clients server sync with other clients
   await this.logs.init();
 }
 
 
-//  serverClass - server-side
+requestIn(  //  serverClass - server-side
 //  public: requests start here
-requestIn(
-   request
-  ,response
+   request  //
+  ,response //
 ) {
   if (typeof(request.headers.host) === "undefined") {
     // not sure how a request can come in withoht a host, but about 6 a day come in and crash the server.  This prevents the requests from crashing the server
@@ -181,8 +180,10 @@ redirect(request, response) {
 }
 
 
-//  serverClass - server-side
-getFilePath(request,response) {
+getFilePath( //  serverClass - server-side
+  request
+  ,response
+  ) {
   const hostName     = request.headers.host.split(":")[0];            // just want hostname, without port #
   const subApp       = request.url.split("/")[1];                     // get the directory or application name
   const subAppConfig = this.config.hosts[hostName].subApps[ subApp ]; // try to get config for an application
@@ -216,15 +217,19 @@ getFilePath(request,response) {
 }
 
 
-// sessionsClass - server-side
-getSubAppPath(subApp,request){
+getSubAppPath( // sessionsClass - server-side
+  subApp
+  ,request
+  ){
   const hostName = request.headers.host.split(":")[0];            // just want hostname, without port #
   return  this.config.hosts[hostName].subApps[ subApp ].filePath; // try to get config for an application
 }
 
 
-//  serverClass - server-side
-async serveFile(request, response) { // private:serve static file. could be html, JSON, etc
+async serveFile(  //  serverClass - server-side
+  request
+  , response
+  ) { // private:serve static file. could be html, JSON, etc
   const filePath = this.getFilePath(request, response);
 
   // lookup mimeType
@@ -259,9 +264,8 @@ async serveFile(request, response) { // private:serve static file. could be html
 }
 
 
-
-// class server - server-side
-async uploadFile(  // not tested for binary files
+async uploadFile(  // class server - server-side
+  // not tested for binary files
   obj   // obj      ->  message
   /*  {"server":"web"
     ,"msg":"uploadFile"
@@ -303,27 +307,37 @@ async uploadFile(  // not tested for binary files
 }
 
 
-async userFile(obj, request, response) {
+async userFile(  //  serverClass - server-side
+  obj, request, response) {
 
 }
 
-//  serverClass - server-side
-async web(// private: process request
+
+async web(  //  serverClass - server-side
+  // private: process request
    obj
   ,request
-  ,response) {
+  ,response
+  ) {
   switch (obj.msg) {
   case "login":
     this.sessions.login(       obj, request, response);
     break;
+
   case "logout":
     this.sessions.logout(       obj, request, response);
     break;
+
   case "changePWD":
     this.sessions.changePWD(    obj, request, response);
     break;
+
   case "addUser":
     await this.sessions.addUser(obj, request, response );
+    break;
+
+  case "sync":
+    await this.sync.manifest(     obj, request, response);
     break;
 
   case "uploadFile":
@@ -331,7 +345,7 @@ async web(// private: process request
     break;
 
   default:
-    app.logs.error( `"Error: server -> method 'web', message = '${obj.msg}"`       ,request, response );
+    app.logs.error( `"Error: server.web, message = '${obj.msg}"`       ,request, response );
   }
 }
 
@@ -371,10 +385,9 @@ POST(        // serverClass - server-side
 }
 
 
-// class server
+async verifyPath(   // serverClass - server-side
 // public: Given a path, creates it if it doesn't already exists, and returns a promise that resolves when finished.
 // used to create logs, etc...
-async verifyPath(
   path  // string of path to create/verify
 ) {
   try {
@@ -384,10 +397,10 @@ async verifyPath(
   }
 }
 
-// class server return user data
-userData(){
+
+userData(){ // class server return user data
 
 }
 
-//  serverClass - server-side
-} //////// end of class
+
+} //  serverClass - server-side  //////// end of class

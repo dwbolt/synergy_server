@@ -1,4 +1,6 @@
-// public
+module.exports = class sessionsClass {   // sessionsClass - server-side
+
+  // public
 /*
 
 class keeps track of user sessions, requests and response authentication
@@ -15,9 +17,6 @@ parseCookies(request)          put cookies in an object so that they can be acce
 
 */
 
-
-// sessionsClass - server-side
-module.exports = class sessionsClass {
 
 constructor () {  // sessionsClass - server-side
     // used to see current state of the server in real time . the logfile logSummary is overwritten every cleanUp cycle
@@ -41,7 +40,8 @@ constructor () {  // sessionsClass - server-side
 
 
 async initSummary( // sessionsClass - server-side
-  fileName) {
+  fileName
+  ) {  ///
   // if server restarts in the middle of the day, load the last data and start from there
 
   // make sure there is a file to load
@@ -63,7 +63,8 @@ async initSummary( // sessionsClass - server-side
     this.requests   = s.requests;
     this.sessionKey = s.sessionsTotal;
     this.bytesSent  = s.bytesSent;
-  }} catch (e) {
+  }
+  } catch (e) {
     // not going to worry if file is not there
     // just want to stop error from propagating up
   }
@@ -157,7 +158,6 @@ responseEnd(
 }
 
 
-
 // public, used to login from html page
 async login( // sessionsClass - server-side
    clientMsg // message from client
@@ -171,8 +171,9 @@ async login( // sessionsClass - server-side
       this.responseEnd(response,'{"msg":false}');
    } else  {
      // try to load user.json from user's directtory
-     const userDir = this.users[user];
-     const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
+     //const userDir = this.users[user];
+   //  const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
+    const file = `${this.getUserDir(request, user)}/user.json`;
      try {
        const json = require(file);
        if (json.pwdDigest === this.string2digestBase64(clientMsg.pwd)) {
@@ -189,6 +190,19 @@ async login( // sessionsClass - server-side
        this.responseEnd(response,'{"msg":false}');
      }
    }
+}
+
+
+getUserDir(  // sessionsClass - server-side
+  request     //
+  ,user
+  )
+{
+  if (!user) {
+    user = this.parseCookies(request).userKey
+  }
+  const userDir = this.users[user];
+  return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
 }
 
 
