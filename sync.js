@@ -27,17 +27,36 @@ async manifest( //  sync - server-side
     this.totalLinks = 0;
 
     // create files in local user space
-    const dir =  app.sessions.getUserDir(request);
-    this.stream   = app.fs.createWriteStream( `${dir}/sync/${app.config.machine}/1-manifest.csv`  , {flags: 'a'});
-    this.streamD  = app.fs.createWriteStream( `${dir}/sync/${app.config.machine}/2-dir.csv`       , {flags: 'a'});
-    this.streamL  = app.fs.createWriteStream( `${dir}/sync/${app.config.machine}/3-links.csv`     , {flags: 'a'});
+    const dir  =  app.sessions.getUserDir(request);
+    const path = `${dir}/sync/${app.config.machine}`;
+
+    // delete sync direcory, the create machine direcor
+    await app.fsp.rm(`${dir}/sync`, { recursive: true });
+    await app.fsp.mkdir(`${path}` , { recursive: true });
+
+    // write header
+    this.stream   = app.fs.createWriteStream( `${path}/1-manifest.csv`  , {flags: 'a'});
+    this.streamD  = app.fs.createWriteStream( `${path}/2-dir.csv`       , {flags: 'a'});
+    this.streamL  = app.fs.createWriteStream( `${path}/3-links.csv`     , {flags: 'a'});
   
     // write header
     this.stream.write(`"File ID","Bytes","Disk Space","Last Access","Creation","Path"\r\n`);
+    this.streamD.write(`"Directory"\r\n`);
+    this.streamL.write(`"Links"\r\n`);
 
     this.getAllFiles("/Users/davidbolt/1-topics"); // hard code for now
-    //console.log(`${this.totalDir} + ${this.totalFiles} = ${this.totalDir + this.totalFiles}`);
-   // console.log(`total links = ${this.totalLinks}`);
+    app.sessions.responseEnd(response, `
+    {
+     "msg"     : true
+    ,"path"    : "${path}"
+    ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv"]
+    ,"machine" : "${app.config.machine}"
+    }`);
+
+    // close the streams
+    this.stream.end();
+    this.streamD.end();
+    this.streamL.end();
   } catch(e) {
     console.log(e);   // need to be logged
   }
@@ -51,7 +70,7 @@ getAllFiles(  //  sync - server-side
 
   files.forEach((file) => {
     const dirFile = `${dirPath}/${file}`;
-    const stat = app.fs.statSync(dirFile);
+    const stat = app.fs.statSync(dirFile);  // should the be converted to a an async version?
 
     if (stat.isSymbolicLink()) {
       this.totalLinks++;
