@@ -34,17 +34,26 @@ async manifest( //  sync - server-side
     await app.fsp.rm(`${dir}/sync`, { recursive: true });
     await app.fsp.mkdir(`${path}` , { recursive: true });
 
-    // write header
+    // create streams
     this.stream   = app.fs.createWriteStream( `${path}/1-manifest.csv`  , {flags: 'a'});
     this.streamD  = app.fs.createWriteStream( `${path}/2-dir.csv`       , {flags: 'a'});
     this.streamL  = app.fs.createWriteStream( `${path}/3-links.csv`     , {flags: 'a'});
   
-    // write header
+    // write headers
     this.stream.write(`"File ID","Bytes","Disk Space","Last Access","Creation","Path"\r\n`);
     this.streamD.write(`"Directory"\r\n`);
     this.streamL.write(`"Links"\r\n`);
 
-    this.getAllFiles("/Users/davidbolt/1-topics"); // hard code for now
+    this.getAllFiles("/Users/davidbolt/1-topics"); // hard code direcotry for now
+
+    // close the streams
+    this.stream.end();
+    this.streamD.end();
+    this.streamL.end();
+
+    // upload files to server
+    
+    // give client statues
     app.sessions.responseEnd(response, `
     {
      "msg"     : true
@@ -53,10 +62,7 @@ async manifest( //  sync - server-side
     ,"machine" : "${app.config.machine}"
     }`);
 
-    // close the streams
-    this.stream.end();
-    this.streamD.end();
-    this.streamL.end();
+
   } catch(e) {
     console.log(e);   // need to be logged
   }
