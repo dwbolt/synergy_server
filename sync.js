@@ -26,6 +26,33 @@ async manifest( //  sync - server-side
     this.totalFiles = 0;
     this.totalLinks = 0;
 
+    this.generateFiles();  //
+    this.upload();
+    // upload files to server
+
+    
+    // give client statues
+    app.sessions.responseEnd(response, `
+    {
+     "msg"     : true
+    ,"path"    : "${path}"
+    ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv"]
+    ,"machine" : "${app.config.machine}"
+    }`);
+
+
+  } catch(e) {
+    console.log(e);   // need to be logged
+  }
+}
+
+upload(){
+
+}
+
+
+generateFiles(//  sync - server-side
+) {
     // create files in local user space
     const dir  =  app.sessions.getUserDir(request);
     const path = `${dir}/sync/${app.config.machine}`;
@@ -50,24 +77,7 @@ async manifest( //  sync - server-side
     this.stream.end();
     this.streamD.end();
     this.streamL.end();
-
-    // upload files to server
-    
-    // give client statues
-    app.sessions.responseEnd(response, `
-    {
-     "msg"     : true
-    ,"path"    : "${path}"
-    ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv"]
-    ,"machine" : "${app.config.machine}"
-    }`);
-
-
-  } catch(e) {
-    console.log(e);   // need to be logged
   }
-}
-
 
 getAllFiles(  //  sync - server-side
   dirPath  // path to local client machine to directory being synced
