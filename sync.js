@@ -26,7 +26,7 @@ async manifest( //  sync - server-side
     this.totalFiles = 0;
     this.totalLinks = 0;
 
-    this.generateFiles();  //
+    await this.generateFiles();  //
     this.upload();
     // upload files to server
 
@@ -51,7 +51,7 @@ upload(){
 }
 
 
-generateFiles(//  sync - server-side
+async generateFiles(//  sync - server-side
 ) {
     // create files in local user space
     const dir  =  app.sessions.getUserDir(request);
