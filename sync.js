@@ -10,13 +10,12 @@ Bugs-
 
 
 constructor () {  //  sync - server-side
-   // nothing to do yet
-   this.x = 0;
+
 }
 
 
 async manifest( //  sync - server-side
-   msg          // null for now
+   msg          // "sync"
   ,request      // HTTPS request
   ,response     // HTTPS response
 ) { 
@@ -26,7 +25,7 @@ async manifest( //  sync - server-side
     this.totalFiles = 0;
     this.totalLinks = 0;
 
-    await this.generateFiles();  //
+    await this.generateFiles(msg,request,response);  //
     this.upload();
     // upload files to server
 
@@ -35,9 +34,8 @@ async manifest( //  sync - server-side
     app.sessions.responseEnd(response, `
     {
      "msg"     : true
-    ,"path"    : "${path}"
+    ,"machine" : "${app.config.sync.machine}"
     ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv"]
-    ,"machine" : "${app.config.machine}"
     }`);
 
 
@@ -52,14 +50,17 @@ upload(){
 
 
 async generateFiles(//  sync - server-side
+ msg          // sync
+,request      // HTTPS request
+,response     // HTTPS response
 ) {
     // create files in local user space
     const dir  =  app.sessions.getUserDir(request);
-    const path = `${dir}/sync/${app.config.machine}`;
+    const path = `${dir}/sync/${app.config.sync.machine}`;
 
-    // delete sync direcory, the create machine direcor
-    await app.fsp.rm(`${dir}/sync`, { recursive: true });
-    await app.fsp.mkdir(`${path}` , { recursive: true });
+    // delete/create machine directory
+    await app.fsp.rm(   `${path}`, { recursive: true });
+    await app.fsp.mkdir(`${path}`, { recursive: true });
 
     // create streams
     this.stream   = app.fs.createWriteStream( `${path}/1-manifest.csv`  , {flags: 'a'});
@@ -71,7 +72,12 @@ async generateFiles(//  sync - server-side
     this.streamD.write(`"Directory"\r\n`);
     this.streamL.write(`"Links"\r\n`);
 
-    this.getAllFiles("/Users/davidbolt/1-topics"); // hard code direcotry for now
+    // read sync config file
+    const keys =  Object.keys(app.config.sync.directories);
+    keys.forEach((key,index)=>{
+      this.getAllFiles(app.config.sync.directories[key]); // hard code direcotry for now
+    });
+
 
     // close the streams
     this.stream.end();
