@@ -1,3 +1,5 @@
+module.exports = class logsClass {  //  logClass - server-side
+  
 /*
 
 every request,response and error is Logged
@@ -21,9 +23,6 @@ if the server restarts it reads the summary file and continues to add to the tot
 every second the create() function runs to se
 
 */
-
-//  logClass - server-side
-module.exports = class logsClass {
 
 
 //  logClass - server-side

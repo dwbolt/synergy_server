@@ -34,19 +34,23 @@ Each time the server starts and new log directory is created with the name:  YYY
 */
 
 
-//  serverClass - server-side
-constructor (s_configDir) {
+constructor ( //  serverClass - server-side
+  requestType,  // http or https, 
+  s_configDir   // configuration directory
+  )
+   {
   // native nodejs modules
-  this.https    = require('https')      ; // process https requests
-  this.http     = require('http')       ; // process https requests
-  this.fsp      = require('fs/promises'); // access local file system
-  this.fs       = require('fs')         ; // access local file system
-  this.path     = require('path')       ; // used once (maybe use string function insead)
+  this.configDir = s_configDir;
+  this.https     = require('https')      ; // process https requests
+  this.http      = require('http')       ; // process https requests
+  this.fsp       = require('fs/promises'); // access local file system
+  this.fs        = require('fs')         ; // access local file system
+  this.path      = require('path')       ; // used once (maybe use string function insead)
 
 
 //  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
 
-  this.config   = this.loadConfiguration(s_configDir);
+  this.config   = this.loadConfiguration(`${ s_configDir}/${requestType}`);
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -147,7 +151,7 @@ loadConfiguration(s_configDir) { // private:
   for(var h in config.hosts) {
     // load all domain configurations contained in _config.json
     try {
-      const f = `./${s_configDir}/${config.hosts[h]}.json`;
+      const f = `${s_configDir}/${config.hosts[h]}.json`;
       console.log(`domain:   ${h}`);
       console.log(`  loading ${f}`);
       config.hosts[h]  = require(f);
