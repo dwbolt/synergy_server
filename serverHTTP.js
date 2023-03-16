@@ -1,7 +1,10 @@
 // web server: static files and and API to webserver
 
 // create server class and load configuration file
-app = new (require('./server.js'))("../config/configHTTP");  // class where the work gets done
+
+//app = new (require('./server.js'))("../config/configHTTP");  // class where the work gets done
+// location of config file is passed in node serverHTTP -config  ../config/configHTTP
+app = new (require('./server.js'))( process.argv[process.argv.indexOf('-config') + 1] );  // class where the work gets done
 
 async function startServer() {
   await app.init();
