@@ -43,14 +43,11 @@ constructor ( //  serverClass - server-side
   this.configDir = s_configDir;
   this.https     = require('https')      ; // process https requests
   this.http      = require('http')       ; // process https requests
-  this.fsp       = require('fs/promises'); // access local file system
+  this.fsp       = require('fs/promises'); // access local file system with promises
   this.fs        = require('fs')         ; // access local file system
   this.path      = require('path')       ; // used once (maybe use string function insead)
 
-
-//  this.uuidv1   = require('uuid/v1');   ; // Generate GUIDs - (can this be replaced with a native node function)
-
-  this.config   = this.loadConfiguration(`${ s_configDir}/${requestType}`);
+  this.config    = this.loadConfiguration(`${ s_configDir}/${requestType}`);
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -127,6 +124,13 @@ requestIn(  //  serverClass - server-side
     if (request.method === "POST") {
       // talk to this web server or upstream server, return result to client
       this.POST(request, response);
+    } else if ( request.method === "OPTIONS" ) {  // see if a redirect has been defined
+      response.writeHead( 204, { 
+          "access-control-allow-methods" : "POST, GET, PUT, DELETE"
+        ,"Access-Control-Allow-Origin"   : "*" 
+        ,"Access-Control-Allow-Headers"  : "Content-Type, Authorization"
+      } )
+      this.sessions.responseEnd(response); 
     } else if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
       // serve static file
       this.serveFile(request, response);
@@ -140,32 +144,62 @@ requestIn(  //  serverClass - server-side
 }
 
 
-//  serverClass - server-side
-loadConfiguration(s_configDir) { // private:
+loadConfiguration(
+  s_configDir
+  ) { //  serverClass - server-side    // private:
   // configuration file
   const config  = require(`${s_configDir}/_config.json`);   // ports, domains served, etc on server
+
+  // calculate maxSessionAge in milli seconds
   config.maxSessionAge.totalMilliSec = 0;
   if (config.maxSessionAge.minutes) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.minutes * 60 * 1000;}
   if (config.maxSessionAge.seconds) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.seconds * 1000;}
 
+  // load configurative file for each domain
   for(var h in config.hosts) {
     // load all domain configurations contained in _config.json
     try {
       const f = `${s_configDir}/${config.hosts[h]}.json`;
+      console.log("");
       console.log(`domain:   ${h}`);
       console.log(`  loading ${f}`);
       config.hosts[h]  = require(f);
+      this.checkDomainDirectories(config.hosts[h]);
     } catch (e) {
       // can not use logError, the directory to put the error log is located in the the configuration file, and loading it is where the error is.
-      app.log.error.log(`server.js loadConfiguration  error=${e}`);
+      console.log(`server.js loadConfiguration  error=${e}`)
     }
   }
+
+  // allow port to be changed from command line
+  const portIndex = process.argv.indexOf('-port') + 1;
+  if ( 0<portIndex && process.argv[portIndex]) {
+    // port was set from command line
+    config.port = process.argv[portIndex];  
+  }
+
   return config;
 }
 
 
-//  serverClass - server-side
-redirect(request, response) {
+checkDomainDirectories(  //  serverClass - server-side
+  domainConfig  // make sure all directories in config file exist
+  ) {
+  
+  for(var key in domainConfig) {
+    if (this.fs.existsSync(domainConfig[key].filePath)) {
+      console.log(`directory ${domainConfig[key].filePath} exists`)
+    } else {  
+      console.log(`directory ${domainConfig[key].filePath} does not exist **********`)
+    }
+  }
+}
+
+
+redirect( //  serverClass - server-side
+    request
+  , response
+  ) {
     // strip off leading / and covert to lowercase
     const  url = request.url.substr(1).toLowerCase();
 
@@ -188,9 +222,9 @@ getFilePath( //  serverClass - server-side
   request
   ,response
   ) {
-  const hostName     = request.headers.host.split(":")[0];            // just want hostname, without port #
-  const subApp       = request.url.split("/")[1];                     // get the directory or application name
-  const subAppConfig = this.config.hosts[hostName].subApps[ subApp ]; // try to get config for an application
+  const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
+  const subApp       = request.url.split("/")[1];             // get the directory or application name
+  const subAppConfig = this.config.hosts[hostName][ subApp ]; // try to get config for an application
 
   // create file ref from url
   let url = request.url;
@@ -207,14 +241,19 @@ getFilePath( //  serverClass - server-side
   let filePath;
   if (subAppConfig) {
       filePath = subAppConfig.filePath;
-      // take off subApp part of url
-      url = url.substr(subApp.length+1);
+
+      if (0<subApp.length) {
+        // take off subApp part of url
+        url = url.substr(subApp.length+1);
+      }
+
+
       if (subApp === "users") {
         // make sure they are logged in and add their subdirectory
         filePath += "/"+ this.sessions.getUserPath(response);
       }
   } else {
-    filePath = this.config.hosts[hostName].filePath;
+    filePath = this.config.hosts[hostName][""].filePath;  // get the default path
   }
 
   return filePath+url;
@@ -222,11 +261,11 @@ getFilePath( //  serverClass - server-side
 
 
 getSubAppPath( // sessionsClass - server-side
-  subApp
+   subApp
   ,request
   ){
   const hostName = request.headers.host.split(":")[0];            // just want hostname, without port #
-  return  this.config.hosts[hostName].subApps[ subApp ].filePath; // try to get config for an application
+  return  this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
 }
 
 
@@ -251,7 +290,7 @@ async serveFile(  //  serverClass - server-side
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
         content = `
-          <meta http-equiv="Refresh" content="0; url='/app.html?p=page-not-found'" />
+          <meta http-equiv="Refresh" content="0; url='/app.html?p=page-not-found&url=${request.url}'" />
           <p>Redirect to new url</p>`;
         app.logs.error(`app.serveFile() file not found - ${filePath}`,request, response);
     } else {
@@ -367,7 +406,7 @@ POST(        // serverClass - server-side
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
     try {
-      var obj = JSON.parse(body);
+      var obj = JSON.parse(body);  // covert string to a json object
     } catch (e) {
         this.logs.error(`serverClass.POST - body = ${body}`);
       return;
@@ -381,6 +420,9 @@ POST(        // serverClass - server-side
       case "pic":
         this.picServer.requestIn(obj, request, response);
         break;*/
+      case "sync":
+        this.sync.direct(obj, request, response);
+        break;
       default:
         // get error to user, add to server log
         app.logs.error(`Error server.js POST obj.server = ${obj.server}`, request, response);

@@ -143,10 +143,16 @@ initRequest(sessionKey, request, response) { // private, intit Request object
 // public, called to end response back to client
 responseEnd(
    response  // response ->
-  ,content   // content -> what is to be sent to browser client
+  ,content  // content -> what is to be sent to browser client
 ) {
   // make request complete not written yet
-  response.end(content);  // tell the client there is no more coming
+  if (content) {
+    response.end(content);  // tell the client there is no more coming
+  } else {
+    // supports OPTIONS method with no contnet, only headers
+    response.end();  // tell the client there is no more coming
+    content=""; // 
+  }
   delete this.openRequests[response.synergyRequest.openReqestKey];  // remove from openRequest object
 
   const obj = this.sessions[response.synergyRequest.sessionNumber].requests[response.synergyRequest.requestNumber];
