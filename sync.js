@@ -44,23 +44,32 @@ async manifest( //  sync - server-side
   let directoryWrite // where meta data is stored about all the files in directoryRead 
    , directoryRead;  // directory were are creating the manifest files about
 
-  if (msg.type === "client2server") {
-      if (msg.) {
+   let config={};  
+
+  if         (msg.type === "client2server") {
+      if        (msg.location === "local") {
         // manifes for local server upload
-        this.config    = require(app.getFilePath(request ,response ) + "/config.json");
-        directoryWrite = this.getAllFiles(this.config[msg.type][msg.direcotry]); // local dirtory to generate manifest fils
-        directoryRead  = 
-      } else if (){
-
+        config = require(app.getFilePath(request ,response ) + "/config.json")
+        directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
+        directoryRead  = config.client2server[msg.direcotry]
+      } else if (msg.location === "remote") {
+        // manifes for remote serverthe one logged into  
+        config.machine = "remote";
+        directoryWrite = app.getFilePath(request); // local dirtory to generate manifest fils
+        directoryRead  = directoryWrite+"/upload";
       } else {
-        // error failed
-        return
+        // error
+        directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
+        directoryRead  = config.client2server[msg.direcotry]
+        return;
       }
-  } else if () {
-
+  } else if (msg.type === "client2client") {
+      //
+    return;
   } else {
+    //
     // error in vailid msg.type
-    return
+    return;
   }
   
   // load config file
@@ -79,7 +88,7 @@ async manifest( //  sync - server-side
     app.sessions.responseEnd(response, `
     {
      "msg"     : true
-    ,"machine" : "${this.config.machine}"
+    ,"machine" : "${config.machine}"
     ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv"]
     }`);
 
@@ -96,9 +105,6 @@ async generateFiles(//  sync - server-side
 ,request      // HTTPS request
 ,response     // HTTPS response
 ) {
-    // create files in local user space
-    const path = `${app.getFilePath(request ,response )}/${msg.type}/${msg.direcotry}`;  // where manifest files will be written
-
     // delete/create machine directory
     await app.fsp.rm(   `${directoryWrite}`, { recursive: true ,force: true});  // ignore errow if it does not exist
     await app.fsp.mkdir(`${directoryWrite}`, { recursive: true });              // should have an empty directory now

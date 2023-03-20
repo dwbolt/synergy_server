@@ -221,7 +221,7 @@ redirect( //  serverClass - server-side
 getFilePath( //  serverClass - server-side
   request
   ,response
-  ) {
+  ) {  // return local file path for url
   const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
   const subApp       = request.url.split("/")[1];             // get the directory or application name
   const subAppConfig = this.config.hosts[hostName][ subApp ]; // try to get config for an application
@@ -402,6 +402,7 @@ POST(        // serverClass - server-side
   request.on('data', chunk => {
       body += chunk.toString(); // convert Buffer to string
   });
+  
   request.on('end', () => {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
