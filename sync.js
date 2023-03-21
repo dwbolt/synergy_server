@@ -55,7 +55,7 @@ async manifest( //  sync - server-side
       } else if (msg.location === "remote") {
         // manifes for remote serverthe one logged into  
         config.machine = "remote";
-        directoryWrite = app.getFilePath(request); // local dirtory to generate manifest fils
+        directoryWrite = app.getFilePath(request,response); // local dirtory to generate manifest fils
         directoryRead  = directoryWrite+"/upload";
       } else {
         // error
@@ -106,8 +106,8 @@ async generateFiles(//  sync - server-side
 ,response     // HTTPS response
 ) {
     // delete/create machine directory
-    await app.fsp.rm(   `${directoryWrite}`, { recursive: true ,force: true});  // ignore errow if it does not exist
-    await app.fsp.mkdir(`${directoryWrite}`, { recursive: true });              // should have an empty directory now
+    await app.fsp.rm(   directoryWrite, { recursive: true ,force: true});  // ignore errow if it does not exist
+    await app.fsp.mkdir(directoryWrite, { recursive: true });              // should have an empty directory now
 
     // create streams
     this.stream   = app.fs.createWriteStream( `${directoryWrite}/1-manifest.csv`  , {flags: 'a'});  // append to end of file
@@ -120,7 +120,8 @@ async generateFiles(//  sync - server-side
     this.streamL.write(`"Links"\r\n`);
 
     // creat manifest files
-    this.getAllFiles(directoryRead); // local dirtory to generate manifest fils
+    await app.fsp.mkdir(directoryRead, { recursive: true })       // create directory if it does not exist
+    this.getAllFiles(   directoryRead); // local dirtory to generate manifest fils
     directoryRead
 
     // close the streams

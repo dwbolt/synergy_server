@@ -24,7 +24,7 @@ constructor () {  // sessionsClass - server-side
     this.serverStart  = Date.now();
 
     // load user autentication data
-    this.users        = require(`${app.configDir}/users.json`);
+    this.users        = require(`${app.configDir}/users/users.json`);
 
     // requests
     this.requests        = 0    // increment each time a request comes in
@@ -267,16 +267,16 @@ async addUser( // sessionsClass - server-side
     const year = new Date().getFullYear().toString();
     let next   = this.users[year] || 1;  // init to 1 if no users exixt for current year
 
-    const userDir = `${year}/${next}-${clientMsg.nameLast},${clientMsg.nameFirst}`;
+    const userDir              = `${year}/${next}-${clientMsg.nameLast},${clientMsg.nameFirst}`;
     this.users[clientMsg.user] = userDir;
-    this.users[year] = ++next;  // increment the next userer number
+    this.users[year]           = ++next;  // increment the next userer number
 
     // save updated user file to file
-    await app.fsp.writeFile(`${app.config.userDir}users.json`, JSON.stringify(this.users));
+    await app.fsp.writeFile(`${app.config.userDir}/users/users.json`, JSON.stringify(this.users));
 
     // copy user timeplate direcory to new user directory
     const usersDir = app.getSubAppPath("users",request);
-    await app.fsp.cp(`${usersDir}/_template`, `${usersDir}/${userDir}`, {recursive: true})
+    await app.fsp.cp(`${app.configDir}/users/_template`, `${usersDir}/${userDir}`, {recursive: true})
 
     // add user json file with salted passord
     const userData = `

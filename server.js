@@ -219,7 +219,7 @@ redirect( //  serverClass - server-side
 
 
 getFilePath( //  serverClass - server-side
-  request
+   request
   ,response
   ) {  // return local file path for url
   const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
@@ -246,7 +246,6 @@ getFilePath( //  serverClass - server-side
         // take off subApp part of url
         url = url.substr(subApp.length+1);
       }
-
 
       if (subApp === "users") {
         // make sure they are logged in and add their subdirectory
@@ -331,8 +330,7 @@ async uploadFile(  // class server - server-side
     this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
   }
 
-  const subAppConfig = this.config.hosts[hostName].subApps[ "users"];  // only allow upload to user area
-  const directory = `${subAppConfig.filePath}`;
+  const directory = this.config.hosts[hostName].users.filePath;  // only allow upload to user area
   let path = `${directory}/${this.sessions.getUserPath(response)}/${obj.path}`;
 
   try {
