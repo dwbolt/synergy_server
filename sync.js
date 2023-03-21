@@ -56,7 +56,7 @@ async manifest( //  sync - server-side
         // manifes for remote serverthe one logged into  
         config.machine = "remote";
         directoryWrite = app.getFilePath(request,response); // local dirtory to generate manifest fils
-        directoryRead  = directoryWrite+"/upload";
+        directoryRead  = directoryWrite+"/uploaded";
       } else {
         // error
         directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
