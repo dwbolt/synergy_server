@@ -219,6 +219,7 @@ redirect( //  serverClass - server-side
 
 
 getFilePath( //  serverClass - server-side
+  // convert URL to local server file path
    request
   ,response
   ) {  // return local file path for url
@@ -250,6 +251,10 @@ getFilePath( //  serverClass - server-side
       if (subApp === "users") {
         // make sure they are logged in and add their subdirectory
         filePath += "/"+ this.sessions.getUserPath(response);
+      }
+
+      if (subAppConfig.method) {
+        filePath  = app[subAppConfig.method].getFilePath(request,response);
       }
   } else {
     filePath = this.config.hosts[hostName][""].filePath;  // get the default path

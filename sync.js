@@ -29,7 +29,7 @@ async direct( //  sync - server-side
       break;
   
     default:
-      app.logs.error( `"Error: server.sync, message = '${obj}"`       ,request, response );
+      app.logs.error( `"Error: server.sync.direct message = '${obj}"`       ,request, response );
   }
 }
 
@@ -59,8 +59,7 @@ async manifest( //  sync - server-side
         directoryRead  = directoryWrite+"/uploaded";
       } else {
         // error
-        directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
-        directoryRead  = config.client2server[msg.direcotry]
+        console.log(`error: sync.js   manifes() msg= ${msg} `)
         return;
       }
   } else if (msg.type === "client2client") {
@@ -117,7 +116,7 @@ async generateFiles(//  sync - server-side
     this.streamH  = app.fs.createWriteStream( `${directoryWrite}/4-Hidden.csv`    , {flags: 'a'}); // append to end of file
 
     // write headers
-    this.stream.write( `"File ID","Bytes","Disk Space","Last Access","Creation","Path"\r\n`);
+    this.stream.write( `"File ID","Bytes","Disk Space","Last Access","Creation","Path","URL"\r\n`);
     this.streamD.write(`"Directory"\r\n`);
     this.streamL.write(`"Links"\r\n`);
     this.streamD.write(`"Directory"\r\n`);
@@ -172,7 +171,7 @@ getAllFiles(  //  sync - server-side    // recursice - find all files in all sub
     } else {
       // assume a regulare file
       // inode,size, disk size,"last access date", creation date", "path with file name"
-      this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFile}"\r\n`);
+      this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFile}","${url}"\r\n`);
       this.totalFiles++;
     }
   });
