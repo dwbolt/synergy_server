@@ -78,9 +78,10 @@ async manifest( //  sync - server-side
 
   try {
     // init counters
-    this.totalDir   = 0;
-    this.totalFiles = 0;
-    this.totalLinks = 0;
+    this.totalDir    = 0;
+    this.totalFiles  = 0;
+    this.totalLinks  = 0;
+    this.totalHidden = 0;
 
     await this.generateFiles(directoryWrite, directoryRead, request, response);  //
     
@@ -113,11 +114,13 @@ async generateFiles(//  sync - server-side
     this.stream   = app.fs.createWriteStream( `${directoryWrite}/1-manifest.csv`  , {flags: 'a'});  // append to end of file
     this.streamD  = app.fs.createWriteStream( `${directoryWrite}/2-dir.csv`       , {flags: 'a'});  // append to end of file
     this.streamL  = app.fs.createWriteStream( `${directoryWrite}/3-links.csv`     , {flags: 'a'}); // append to end of file
-  
+    this.streamH  = app.fs.createWriteStream( `${directoryWrite}/4-Hidden.csv`    , {flags: 'a'}); // append to end of file
+
     // write headers
     this.stream.write( `"File ID","Bytes","Disk Space","Last Access","Creation","Path"\r\n`);
     this.streamD.write(`"Directory"\r\n`);
     this.streamL.write(`"Links"\r\n`);
+    this.streamD.write(`"Directory"\r\n`);
 
     // creat manifest files
     await app.fsp.mkdir(directoryRead, { recursive: true })       // create directory if it does not exist
@@ -128,11 +131,13 @@ async generateFiles(//  sync - server-side
     this.stream.end( );
     this.streamD.end();
     this.streamL.end();
+    this.streamH.end();
   }
 
 
 getAllFiles(  //  sync - server-side    // recursice - find all files in all subdirectories
   directoryRead  // path to local client machine to directory being synced
+  ,childOfHiddenDirectory = false
   ) {
   const files = app.fs.readdirSync(directoryRead);
 
@@ -142,17 +147,30 @@ getAllFiles(  //  sync - server-side    // recursice - find all files in all sub
 
     // there are probabliy more cases than this
     if (stat.isSymbolicLink()) {
+      // not sure what todo about this
       this.totalLinks++;
       this.streamL.write(`"${dirFile}"\r\n`);
     }
-
+    
     if (stat.isDirectory()) {
       // create csv of direcotorys
-      this.streamD.write(`"${dirFile}"\r\n`);
-      this.totalDir ++;
-      this.getAllFiles(dirFile);   // recursice
+      if (file[0]==='.' || childOfHiddenDirectory) {
+        // hidden directory
+        this.totalHidden++;
+        this.streamH.write(`"${dirFile}"\r\n`);
+        this.getAllFiles(dirFile, true );   // recursice
+      } else {
+        // not hidden directory
+        this.streamD.write(`"${dirFile}"\r\n`);
+        this.totalDir ++;
+        this.getAllFiles(dirFile,  childOfHiddenDirectory);   // recursice
+      }
+    } else if (file[0]==='.' || childOfHiddenDirectory) {
+      // hidden file or childOfHiddenDirectory
+      this.totalHidden++;
+      this.streamH.write(`"${dirFile}"\r\n`);
     } else {
-      // assume create csv of files
+      // assume a regulare file
       // inode,size, disk size,"last access date", creation date", "path with file name"
       this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFile}"\r\n`);
       this.totalFiles++;
