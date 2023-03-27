@@ -39,15 +39,17 @@ constructor ( //  serverClass - server-side
   s_configDir   // configuration directory
   )
    {
+  // remember parameters
+  this.requestType = requestType;   
+  this.configDir   = s_configDir;
+  this.config      = null // will load during this.init()
+
   // native nodejs modules
-  this.configDir = s_configDir;
   this.https     = require('https')      ; // process https requests
   this.http      = require('http')       ; // process https requests
   this.fsp       = require('fs/promises'); // access local file system with promises
   this.fs        = require('fs')         ; // access local file system
   this.path      = require('path')       ; // used once (maybe use string function insead)
-
-  this.config    = this.loadConfiguration(`${ s_configDir}/${requestType}`);
 
   this.mimeTypes = {
       '.html': 'text/html',
@@ -98,6 +100,8 @@ constructor ( //  serverClass - server-side
 
 
 async init(){  //  serverClass - server-side
+  this.config    = this.loadConfiguration(`${this.configDir }/${this.requestType}`);
+
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
   this.logs     = new (require('./logs.js'    ));   // logs
   this.sync     = new (require('./sync.js'    ));   // support clients server sync with other clients
@@ -253,8 +257,8 @@ getFilePath( //  serverClass - server-side
         filePath += "/"+ this.sessions.getUserPath(response);
       }
 
-      if (subAppConfig.method) {
-        filePath  = app[subAppConfig.method].getFilePath(request,response);
+      if (subAppConfig.class) {
+        filePath  = app[subAppConfig.class].getFilePath(request,response);
       }
   } else {
     filePath = this.config.hosts[hostName][""].filePath;  // get the default path
