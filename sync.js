@@ -49,9 +49,12 @@ async manifest( //  sync - server-side
   if         (msg.type === "client2server") {
       if        (msg.location === "local") {
         // manifes for local server upload
-        config = require(app.getFilePath(request ,response ) + "/config.json")
-        directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
-        directoryRead  = config.client2server[msg.direcotry]
+//        config = require(app.getFilePath(request ,response ) + "/config.json")
+ //       directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
+//        directoryRead  = config.client2server[msg.direcotry]
+        directoryRead  =  app.sessions.getLocalUserDir(request, msg.user);
+        directoryWrite = `${directoryRead}/sync/${app.config.machine}`;  // assume userid for remote is same as userid for local  
+
       } else if (msg.location === "remote") {
         // manifes for remote serverthe one logged into  
         config.machine = "remote";
@@ -88,11 +91,9 @@ async manifest( //  sync - server-side
     app.sessions.responseEnd(response, `
     {
      "msg"     : true
-    ,"machine" : "${config.machine}"
-    ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv"]
+    ,"machine" : "${app.config.machine}"
+    ,"files"   : ["1-manifest.csv","2-dir.csv","3-links.csv","4-Hidden.csv"]
     }`);
-
-
   } catch(e) {
     console.log(e);   // need to be logged
   }
@@ -101,7 +102,7 @@ async manifest( //  sync - server-side
 
 async generateFiles(//  sync - server-side
  directoryWrite     // where manifest files will be written
-,directoryRead      // 
+,directoryRead      // directory that meta data is about
 ,request      // HTTPS request
 ,response     // HTTPS response
 ) {
@@ -171,6 +172,7 @@ getAllFiles(  //  sync - server-side    // recursice - find all files in all sub
     } else {
       // assume a regulare file
       // inode,size, disk size,"last access date", creation date", "path with file name"
+      let url="do to";
       this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFile}","${url}"\r\n`);
       this.totalFiles++;
     }

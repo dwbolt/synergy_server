@@ -153,11 +153,24 @@ loadConfiguration(
   ) { //  serverClass - server-side    // private:
   // configuration file
   const config  = require(`${s_configDir}/_config.json`);   // ports, domains served, etc on server
+  let configLocal = config.localConfig;  // points to local file location of localConfig file
 
+  // allow for local config overide of config params
+  if (configLocal) {
+    configLocal = require(configLocal); // load local config file
+    Object.keys(configLocal).forEach((key, index) => {
+      // copy logal config attrubuts to config
+      config[key] = configLocal[key];
+     });
+  }
+
+  
   // calculate maxSessionAge in milli seconds
   config.maxSessionAge.totalMilliSec = 0;
   if (config.maxSessionAge.minutes) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.minutes * 60 * 1000;}
   if (config.maxSessionAge.seconds) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.seconds * 1000;}
+
+
 
   // load configurative file for each domain
   for(var h in config.hosts) {
@@ -181,6 +194,7 @@ loadConfiguration(
     // port was set from command line
     config.port = process.argv[portIndex];  
   }
+
 
   return config;
 }

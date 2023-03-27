@@ -212,6 +212,17 @@ getUserDir(  // sessionsClass - server-side
 }
 
 
+getLocalUserDir(  // sessionsClass - server-side
+  // allows remote code to get user data on local machine,  assume remote and local user are using same userid - (weak security)
+  request  //
+  ,user    // 
+  )
+{
+  const userDir = this.users[user];
+  return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
+}
+
+
 async changePWD( // sessionsClass - server-side
    clientMsg // message from client
   ,request   // HTTPS request
