@@ -1,6 +1,6 @@
 module.exports = class serverClass {   //  serverClass - server-side
 
-  /*
+/*
 
 small web server that serves static files and supports an:
 
@@ -35,13 +35,9 @@ Each time the server starts and new log directory is created with the name:  YYY
 
 
 constructor ( //  serverClass - server-side
-  requestType,  // http or https, 
-  s_configDir   // configuration directory
   )
    {
   // remember parameters
-  this.requestType = requestType;   
-  this.configDir   = s_configDir;
   this.config      = null // will load during this.init()
 
   // native nodejs modules
@@ -99,15 +95,34 @@ constructor ( //  serverClass - server-side
 }
 
 
-async init(){  //  serverClass - server-side
-  this.config    = this.loadConfiguration(`${this.configDir }/${this.requestType}`);
+async startServer() {
+  this.configDir   = process.argv[process.argv.indexOf('-config') + 1];
+  this.config      = this.loadConfiguration(`${this.configDir }/${this.requestType}`);
 
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
   this.logs     = new (require('./logs.js'    ));   // logs
   this.sync     = new (require('./sync.js'    ));   // support clients server sync with other clients
   await this.logs.init();
-}
 
+  // start timers
+  setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);  // delete inactive sessions
+  setInterval(     app.logs.summary.bind(app.logs)    , 5000);  // over write daily summary log
+
+  app.logs.error(`server started`);  // only an error if pm2 is restarting sever
+
+  // server listen for web requests
+  this.https.createServer(
+    {
+    // https certificates for encription
+    key:  this.fs.readFileSync(`${this.configDir}/HTTPS/certificates/private.key.pem`)
+   ,cert: this.fs.readFileSync(`${this.configDir}/HTTPS/certificates/domain.cert.pem`)
+   ,ca:   this.fs.readFileSync(`${this.configDir}/HTTPS/certificates/intermediate.cert.pem`)
+    },this.requestIn.bind(app)
+  ).listen(this.config.port);
+
+  // will apear in pm2 logs - along with any error messeges if the loggin object has an error
+  console.log(`https:// Server using port: ${app.config.port}`);
+}
 
 requestIn(  //  serverClass - server-side
 //  public: requests start here
@@ -148,9 +163,9 @@ requestIn(  //  serverClass - server-side
 }
 
 
-loadConfiguration(
+loadConfiguration(  //  serverClass - server-side    // private:
   s_configDir
-  ) { //  serverClass - server-side    // private:
+  ) { 
   // configuration file
   const config  = require(`${s_configDir}/_config.json`);   // ports, domains served, etc on server
   let configLocal = config.localConfig;  // points to local file location of localConfig file
@@ -163,14 +178,11 @@ loadConfiguration(
       config[key] = configLocal[key];
      });
   }
-
   
   // calculate maxSessionAge in milli seconds
   config.maxSessionAge.totalMilliSec = 0;
   if (config.maxSessionAge.minutes) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.minutes * 60 * 1000;}
   if (config.maxSessionAge.seconds) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.seconds * 1000;}
-
-
 
   // load configurative file for each domain
   for(var h in config.hosts) {
@@ -194,7 +206,6 @@ loadConfiguration(
     // port was set from command line
     config.port = process.argv[portIndex];  
   }
-
 
   return config;
 }
@@ -472,3 +483,7 @@ userData(){ // class server return user data
 
 
 } //  serverClass - server-side  //////// end of class
+
+
+app = new (require('./server.js'));  // class where the work gets done
+app.startServer();
