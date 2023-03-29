@@ -95,9 +95,9 @@ constructor ( //  serverClass - server-side
 }
 
 
-async startServer() {
-  this.configFile   = process.argv[process.argv.indexOf('-config') + 1];
-  this.config      = this.loadConfiguration();
+async startServer() {   //  serverClass - server-side
+  this.configFile   = process.argv[process.argv.indexOf('-config') + 1];  // get config file path from command line
+  this.config       = this.loadConfiguration();                           // load config for server and domains
 
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
   this.logs     = new (require('./logs.js'    ));   // logs
@@ -169,17 +169,17 @@ requestIn(  //  serverClass - server-side
 }
 
 
-loadConfiguration(  //  serverClass - server-side    // private:
+loadConfiguration(  //  serverClass - server-side 
   ) { 
-  // configuration file
+  // load main configuration file
   const config  = require(this.configFile);   // ports, domains served, etc on server
-  let configLocal = config.localConfig;  // points to local file location of localConfig file
 
   // allow for local config overide of config params
+  let configLocal = config.localConfig;       // points to local file config, allows override of main config 
   if (configLocal) {
     configLocal = require(configLocal); // load local config file
     Object.keys(configLocal).forEach((key, index) => {
-      // copy logal config attrubuts to config
+      // copy local config attrubuts to main config
       config[key] = configLocal[key];
      });
   }
@@ -189,18 +189,24 @@ loadConfiguration(  //  serverClass - server-side    // private:
   if (config.maxSessionAge.minutes) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.minutes * 60 * 1000;}
   if (config.maxSessionAge.seconds) {config.maxSessionAge.totalMilliSec += config.maxSessionAge.seconds * 1000;}
 
-  // assume domeain files are in the same directory as configfile
+  // load domain directory paths and make sure they are there
+  // domain configuration files are in the same directrory as the main config file
   const s_configDir = this.configFile.substring(0, this.configFile.search("_config.json") )
    // load configurative file for each domain
   for(var h in config.hosts) {
     // load all domain configurations contained in _config.json
     try {
-      const f = `${s_configDir}${config.hosts[h]}.json`;
+      const f = `${s_configDir}${config.hosts[h]}.json`;  // get file name
       console.log("");
       console.log(`domain:   ${h}`);
       console.log(`  loading ${f}`);
-      config.hosts[h]  = require(f);
-      this.checkDomainDirectories(config.hosts[h]);
+      if (this.fs.existsSync(f)) {
+        // domain config file exists
+        config.hosts[h]  = require(f);
+        this.checkDomainDirectories(config.hosts[h]); 
+      } else {
+        console.log(`  domain file does not exist ${f} ********`);
+      }
     } catch (e) {
       // can not use logError, the directory to put the error log is located in the the configuration file, and loading it is where the error is.
       console.log(`server.js loadConfiguration  error=${e}`)
@@ -208,10 +214,17 @@ loadConfiguration(  //  serverClass - server-side    // private:
   }
 
   // allow port to be changed from command line
-  const portIndex = process.argv.indexOf('-port') + 1;
-  if ( 0<portIndex && process.argv[portIndex]) {
+  let paramIndex = process.argv.indexOf('-port') + 1;
+  if ( 0<paramIndex && process.argv[paramIndex]) {
     // port was set from command line
-    config.port = process.argv[portIndex];  
+    config.port = process.argv[paramIndex];  
+  }
+
+  // allow protocol to be changed from command line
+  paramIndex = process.argv.indexOf('-protocol') + 1;
+  if ( 0<paramIndex && process.argv[paramIndex]) {
+    // port was set from command line
+    config.protocol = process.argv[paramIndex];  
   }
 
   return config;
