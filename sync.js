@@ -11,19 +11,17 @@ Bugs-
 
 constructor () {  //  sync - server-side
   // load config file for syncvvv
+  this.directoryRead = null  // will hold top level directory for manifest
 }
 
 
 async direct( //  sync - server-side
-  msg  // msg.server : sync
-       // msg.msg  : manifest
-       // msg.type : client2server  | client2client      
-       // msg.direcotry : attribute of client2server or client2client in config file that points to local directory that a manifest list is being created for
+    msg  
   ,request      // HTTPS request
   ,response     // HTTPS response
 ){
 
-  switch (msg.msg) {
+  switch (msg.method) {
     case "manifest":
       this.manifest(msg,request,response);
       break;
@@ -35,31 +33,26 @@ async direct( //  sync - server-side
 
 
 async manifest( //  sync - server-side
-   msg
+   msg  // msg.server : sync
+        // msg.method  : manifest
+        // msg.type : client2server  | client2client      
+        // msg.direcotry : attribute of client2server or client2client in config file that points to local directory that a manifest list is being created for
   ,request      // HTTPS request
   ,response     // HTTPS response
 ) { 
 
   // set direcotryWrite  and directoryRead
   let directoryWrite // where meta data is stored about all the files in directoryRead 
-   , directoryRead;  // directory were are creating the manifest files about
-
-   let config={};  
+  let config={};  
 
   if         (msg.type === "client2server") {
       if        (msg.location === "local") {
-        // manifes for local server upload
-//        config = require(app.getFilePath(request ,response ) + "/config.json")
- //       directoryWrite = app.getFilePath(request)+`/client2server/${msg.direcotry}`; // local dirtory to generate manifest fils
-//        directoryRead  = config.client2server[msg.direcotry]
-        directoryRead  =  app.sessions.getLocalUserDir(request, msg.user);
-        directoryWrite = `${directoryRead}/sync/${app.config.machine}`;  // assume userid for remote is same as userid for local  
-
+        this.directoryRead  =  app.sessions.getLocalUserDir(request, msg.user);
+        directoryWrite      = `${this.directoryRead}/sync/${app.config.machine}`;  // assume userid for remote is same as userid for local  
       } else if (msg.location === "remote") {
         // manifes for remote serverthe one logged into  
-        config.machine = "remote";
-        directoryWrite = app.getFilePath(request,response); // local dirtory to generate manifest fils
-        directoryRead  = directoryWrite+"/uploaded";
+        this.directoryRead  = app.getFilePath(request,response);
+        directoryWrite      = `${this.directoryRead}/sync/${app.config.machine}`; // local dirtory to generate manifest fils
       } else {
         // error
         console.log(`error: sync.js   manifes() msg= ${msg} `)
@@ -69,15 +62,12 @@ async manifest( //  sync - server-side
       //
     return;
   } else {
-    //
     // error in vailid msg.type
     return;
   }
   
-  // load config file
 
   // get local path to direcotry were are creating manifest files for
-
   try {
     // init counters
     this.totalDir    = 0;
@@ -85,7 +75,7 @@ async manifest( //  sync - server-side
     this.totalLinks  = 0;
     this.totalHidden = 0;
 
-    await this.generateFiles(directoryWrite, directoryRead, request, response);  //
+    await this.generateFiles(directoryWrite, this.directoryRead, request, response);  //
     
     // give client statues
     app.sessions.responseEnd(response, `
@@ -117,10 +107,10 @@ async generateFiles(//  sync - server-side
     this.streamH  = app.fs.createWriteStream( `${directoryWrite}/4-Hidden.csv`    , {flags: 'a'}); // append to end of file
 
     // write headers
-    this.stream.write( `"File ID","Bytes","Disk Space","Last Access","Creation","Path","URL"\r\n`);
+    this.stream.write( `"File ID","Bytes","Disk Space","Last Access","Creation","Relitive Path","Path","URL"\r\n`);
     this.streamD.write(`"Directory"\r\n`);
     this.streamL.write(`"Links"\r\n`);
-    this.streamD.write(`"Directory"\r\n`);
+    this.streamH.write(`"Directory"\r\n`);
 
     // creat manifest files
     await app.fsp.mkdir(directoryRead, { recursive: true })       // create directory if it does not exist
@@ -136,7 +126,7 @@ async generateFiles(//  sync - server-side
 
 
 getAllFiles(  //  sync - server-side    // recursice - find all files in all subdirectories
-  directoryRead  // path to local client machine to directory being synced
+   directoryRead                  // path to local client machine to directory being synced
   ,childOfHiddenDirectory = false
   ) {
   const files = app.fs.readdirSync(directoryRead);
@@ -153,7 +143,7 @@ getAllFiles(  //  sync - server-side    // recursice - find all files in all sub
     }
     
     if (stat.isDirectory()) {
-      // create csv of direcotorys
+      // create csv of directorys
       if (file[0]==='.' || childOfHiddenDirectory) {
         // hidden directory
         this.totalHidden++;
@@ -173,7 +163,8 @@ getAllFiles(  //  sync - server-side    // recursice - find all files in all sub
       // assume a regulare file
       // inode,size, disk size,"last access date", creation date", "path with file name"
       let url="do to";
-      this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFile}","${url}"\r\n`);
+      let dirFileRel = dirFile.slice( this.directoryRead.length);
+      this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFileRel}","${dirFile}","${url}"\r\n`);
       this.totalFiles++;
     }
   });
