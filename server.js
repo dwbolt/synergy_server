@@ -299,7 +299,12 @@ getFilePath( //  serverClass - server-side
 
       if (subApp === "users") {
         // make sure they are logged in and add their subdirectory
-        filePath += "/"+ this.sessions.getUserPath(response);
+        filePath += "/"+ this.sessions.getUserPathPrivite(response);
+      }
+
+      if (subApp === "user") {
+        // look at user profile makeing some of their directories public.
+        return filePath + "/"+ this.sessions.getUserPathPublic(filePath,url);
       }
 
       if (subAppConfig.class) {
@@ -385,7 +390,7 @@ async uploadFile(  // class server - server-side
   }
 
   const directory = this.config.hosts[hostName].users.filePath;  // only allow upload to user area
-  let path = `${directory}/${this.sessions.getUserPath(response)}/${obj.path}`;
+  let path = `${directory}/${this.sessions.getUserPathPrivate(response)}/${obj.path}`;
 
   try {
    await this.verifyPath(path) // create file path if it does not exists

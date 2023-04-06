@@ -318,10 +318,31 @@ string2digestBase64(  // sessionsClass - server-side
 }
 
 
-getUserPath( // sessionsClass - server-side
+getUserPathPrivate( // sessionsClass - server-side
   response) {
   // return the logged in users data path
   return this.sessions[response.synergyRequest.sessionNumber].user;
+}
+
+
+getUserPathPublic( // sessionsClass - server-side
+   usersDir        // points to users directory
+  ,url
+  ) {
+  
+  const urlParts  = url.split("/",3);  // break url into array
+  const user      = urlParts[1];       // userid 
+  const publicDir = urlParts[2]        // name of public point
+  const length    = 2 + user.length + publicDir.length;
+  
+  let   file =  this.users[user]    // get user path
+
+  // 
+  const userConfig = require(`${usersDir}/${file}/user.json`);
+  file            +=  "/"+ userConfig.publicDirectorys[publicDir];                    // add public mount point
+
+  // return public file
+  return file+url.slice(length);
 }
 
 
