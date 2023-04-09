@@ -299,7 +299,7 @@ getFilePath( //  serverClass - server-side
 
       if (subApp === "users") {
         // make sure they are logged in and add their subdirectory
-        filePath += "/"+ this.sessions.getUserPathPrivite(response);
+        filePath += "/"+ this.sessions.getUserPathPrivate(response);
       }
 
       if (subApp === "user") {
