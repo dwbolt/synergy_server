@@ -156,9 +156,15 @@ requestIn(  //  serverClass - server-side
         ,"Access-Control-Allow-Headers"  : "Content-Type, Authorization"
       } )
       this.sessions.responseEnd(response); 
-    } else if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
-      // serve static file
-      this.serveFile(request, response);
+    } else if (request.method === "GET") {
+      if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
+        this.serveFile(request, response); // serve static file
+      }
+    } else {
+      // method not supported
+      response.writeHead(200, { 'Content-Type': "text/html" });
+      this.sessions.responseEnd(`server does not support method  ${request.method}`);
+      app.logs.error(`server does not support method  ${request.method}`,request,response);
     }
   } else {
     // error, configuration file not loaded
@@ -456,8 +462,20 @@ POST(        // serverClass - server-side
   ,response  // response ->
 ) {
   let body = '';
+  let i=0;
+  let buffer = new ArrayBuffer (request.headers["content-length"]);
+
   request.on('data', chunk => {
+    if (request.headers["content-type"] === "application/octet-stream") {
+      // binary
+      for( let n=0; n<chunck.length; n++) {
+        buffer(i++)=chunck(n);
+      }
+    } else {
+      // assume string
       body += chunk.toString(); // convert Buffer to string
+    }
+
   });
   
   request.on('end', () => {
