@@ -102,6 +102,8 @@ async startServer() {   //  serverClass - server-side
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
   this.logs     = new (require('./logs.js'    ));   // logs
   this.sync     = new (require('./sync.js'    ));   // support clients server sync with other clients
+  this.restAPI  = new (require('./restAPI'    ));
+
   await this.logs.init();
 
   // start timers
@@ -463,13 +465,13 @@ POST(        // serverClass - server-side
 ) {
   let body = '';
   let i=0;
-  let buffer = new ArrayBuffer (request.headers["content-length"]);
+  let buffer = new Uint8Array (request.headers["content-length"]); 
 
   request.on('data', chunk => {
     if (request.headers["content-type"] === "application/octet-stream") {
       // binary
-      for( let n=0; n<chunck.length; n++) {
-        buffer(i++)=chunck(n);
+      for( let n=0; n<chunk.length; n++) {
+        buffer[i++]=chunk[n];  // add chunk to buffer
       }
     } else {
       // assume string
@@ -479,6 +481,12 @@ POST(        // serverClass - server-side
   });
   
   request.on('end', () => {
+    if (request.headers["content-type"] === "application/octet-stream") {
+      // assume REST API post
+      this.restAPI.post(request,response,buffer);
+      return;
+    }
+
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
     try {
