@@ -33,7 +33,7 @@ async post( // restAPI - server-side
     return;
   }
 
-  const pathWithfileName = `${app.config.hosts[hostName].users.filePath}/${app.sessions.getUserPathPrivate(response)}${url}`;  // will include file name
+  const pathWithfileName = `${app.config.hosts[hostName].users.filePath}/${app.sessions.getUserPathPrivate(response)}/${url}`;  // will include file name
   const pathA            = pathWithfileName.split("/");
   const path             = pathWithfileName.slice(0, pathWithfileName.length - pathA[pathA.length-1].length);  // remove file name
 
