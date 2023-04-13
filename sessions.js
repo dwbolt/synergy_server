@@ -283,11 +283,11 @@ async addUser( // sessionsClass - server-side
     this.users[year]           = ++next;  // increment the next userer number
 
     // save updated user file to file
-    await app.fsp.writeFile(`${app.config.userDir}/users/users.json`, JSON.stringify(this.users));
+    await app.fsp.writeFile(`${app.config.usersDir}/users.json`, JSON.stringify(this.users));
 
     // copy user timeplate direcory to new user directory
     const usersDir = app.getSubAppPath("users",request);
-    await app.fsp.cp(`${app.configDir}/users/_template`, `${usersDir}/${userDir}`, {recursive: true})
+    await app.fsp.cp(`${app.config.usersDir}/_template`, `${usersDir}/${userDir}`, {recursive: true})
 
     // add user json file with salted passord
     const userData = `
