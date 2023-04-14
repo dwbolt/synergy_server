@@ -280,19 +280,25 @@ getFilePath( //  serverClass - server-side
    request
   ,response
   ) {  // return local file path for url
-  const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
+  let url = new URL(request.headers.origin + request.url);  // take care of convert %20 and other escape chacrters to string
+
+  //const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
+  const hostName     = url.hostname;    // just want hostname, without port #
+  let   
   const subApp       = request.url.split("/")[1];             // get the directory or application name
   const subAppConfig = this.config.hosts[hostName][ subApp ]; // try to get config for an application
 
   // create file ref from url
-  let url = request.url;
-  if (url.indexOf('?') > -1) {
+
+  let urlPath = url.Path;
+ /* if (urlPath.indexOf('?') > -1) {      // many not have todo this now that we are using URL object
     // remove any parametes on url
-    url = url.slice(0,url.indexOf('?'));
+    urlPath = urlPath.slice(0,urlPath.indexOf('?'));
   }
-  if (url[url.length-1] === "/") {
+  */
+  if (urlPath[urlPath.length-1] === "/") {
     // add default html file if only a directory is given
-    url += "app.html"
+    urlPath += "app.html"
   }
 
   // find root server path
@@ -302,7 +308,7 @@ getFilePath( //  serverClass - server-side
 
       if (0<subApp.length) {
         // take off subApp part of url
-        url = url.substr(subApp.length+1);
+        urlPath = urlPath.substr(subApp.length+1);
       }
 
       if (subApp === "users") {
