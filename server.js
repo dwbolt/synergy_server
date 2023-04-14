@@ -165,13 +165,13 @@ requestIn(  //  serverClass - server-side
     } else {
       // method not supported
       response.writeHead(200, { 'Content-Type': "text/html" });
-      this.sessions.responseEnd(`server does not support method  ${request.method}`);
+      this.sessions.responseEnd(response,`server does not support method  ${request.method}`);
       app.logs.error(`server does not support method  ${request.method}`,request,response);
     }
   } else {
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
-    this.sessions.responseEnd(`server is not configured for domain ${host}`);
+    this.sessions.responseEnd(response,`server is not configured for domain ${host}`);
     app.logs.error(`configuration file: ${host}.json not found`,request,response);
   }
 }
