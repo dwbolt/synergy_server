@@ -327,10 +327,10 @@ getUserPathPrivate( // sessionsClass - server-side
 
 getUserPathPublic( // sessionsClass - server-side
    usersDir        // points to users directory
-  ,url
+  ,url             // is a URL object
   ) {
   
-  const urlParts  = url.split("/",3);  // break url into array
+  const urlParts  = url.pathname.split("/",3);  // break url into array
   const user      = urlParts[1];       // userid 
   const publicDir = urlParts[2]        // name of public point
   const length    = 2 + user.length + publicDir.length;
@@ -342,7 +342,8 @@ getUserPathPublic( // sessionsClass - server-side
   file            +=  "/"+ userConfig.publicDirectorys[publicDir];                    // add public mount point
 
   // return public file
-  return file+url.slice(length);
+  url.pathname = url.pathname.slice(length);  // take off user and publicDir 
+  return file;
 }
 
 

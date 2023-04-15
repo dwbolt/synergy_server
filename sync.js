@@ -107,7 +107,7 @@ async generateFiles(//  sync - server-side
     this.streamH  = app.fs.createWriteStream( `${directoryWrite}/4-Hidden.csv`    , {flags: 'a'}); // append to end of file
 
     // write headers
-    this.stream.write( `"File ID","Bytes","Disk Space","Last Access","Creation","Relitive Path","Path","URL"\r\n`);
+    this.stream.write( `"File ID","Bytes","Disk Space","Creation","Modify","Last Access","Relitive Path","Path","URL"\r\n`);
     this.streamD.write(`"Directory"\r\n`);
     this.streamL.write(`"Links"\r\n`);
     this.streamH.write(`"Directory"\r\n`);
@@ -164,7 +164,7 @@ getAllFiles(  //  sync - server-side    // recursice - find all files in all sub
       // inode,size, disk size,"last access date", creation date", "path with file name"
       let url="do to";
       let dirFileRel = dirFile.slice( this.directoryRead.length);
-      this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.atime.toUTCString()}","${stat.birthtime.toUTCString()}","${dirFileRel}","${dirFile}","${url}"\r\n`);
+      this.stream.write(`${stat.ino},${stat.size},${stat.blksize*stat.blocks},"${stat.birthtime.toUTCString()}","${stat.mtime.toUTCString()}","${stat.atime.toUTCString()}","${dirFileRel}","${dirFile}","${url}"\r\n`);
       this.totalFiles++;
     }
   });

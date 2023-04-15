@@ -280,55 +280,44 @@ getFilePath( //  serverClass - server-side
    request
   ,response
   ) {  // return local file path for url
-  let url = new URL(request.headers.origin + request.url);  // take care of convert %20 and other escape chacrters to string
+  let url = new URL(app.config.protocol +"://"+ request.headers.host + request.url);  // take care of convert %20 and other escape chacrters to string
 
   //const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
   const hostName     = url.hostname;    // just want hostname, without port #
-  let   
-  const subApp       = request.url.split("/")[1];             // get the directory or application name
-  const subAppConfig = this.config.hosts[hostName][ subApp ]; // try to get config for an application
+  const subApp       = url.pathname.split("/")[1];             // get the directory or application name, if at root level, will be filename
+  const subAppConfig = this.config.hosts[hostName][ subApp ]; // try to get config for an application, will be undefined if at root level
 
-  // create file ref from url
-
-  let urlPath = url.Path;
- /* if (urlPath.indexOf('?') > -1) {      // many not have todo this now that we are using URL object
-    // remove any parametes on url
-    urlPath = urlPath.slice(0,urlPath.indexOf('?'));
-  }
-  */
-  if (urlPath[urlPath.length-1] === "/") {
+  if (url.pathname.length === 1) {
     // add default html file if only a directory is given
-    urlPath += "app.html"
+    url.pathname += "app.html";
   }
 
   // find root server path
   let filePath;
   if (subAppConfig) {
+      if (0<url.pathname.length) {
+        // take off subApp part of url
+        url.pathname = url.pathname.slice(subApp.length+1);
+      }
+
+      // default case, subApp in config file
       filePath = subAppConfig.filePath;
 
-      if (0<subApp.length) {
-        // take off subApp part of url
-        urlPath = urlPath.substr(subApp.length+1);
-      }
-
       if (subApp === "users") {
-        // make sure they are logged in and add their subdirectory
+        // make sure they are logged in, then add their subdirectory
         filePath += "/"+ this.sessions.getUserPathPrivate(response);
-      }
-
-      if (subApp === "user") {
-        // look at user profile makeing some of their directories public.
-        return filePath + "/"+ this.sessions.getUserPathPublic(filePath,url);
-      }
-
-      if (subAppConfig.class) {
-        filePath  = app[subAppConfig.class].getFilePath(request,response);
+      } else if (subApp === "user") {
+        // look at user profile makeing and allow acces to public directories.
+        filePath += "/"+ this.sessions.getUserPathPublic(filePath, url); 
+      } else if (subAppConfig.class) {
+        // don not think this is this used now - dwb
+        filePath  = app[subAppConfig.class].getFilePath(request,response); 
       }
   } else {
     filePath = this.config.hosts[hostName][""].filePath;  // get the default path
   }
 
-  return filePath+url;
+  return filePath+url.pathname;
 }
 
 
