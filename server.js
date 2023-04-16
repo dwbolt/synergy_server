@@ -132,6 +132,7 @@ async startServer() {   //  serverClass - server-side
   console.log(`${this.config.protocol}:// Server using port: ${this.config.port}`);
 }
 
+
 requestIn(  //  serverClass - server-side
 //  public: requests start here
    request  //
@@ -147,32 +148,50 @@ requestIn(  //  serverClass - server-side
 
   // make sure configuration file for web is loaded
   const host = request.headers.host.split(":")[0];  // get rid of port# if it is there
-  if ( this.config.hosts[host] ) {
-    if (request.method === "POST") {
-      // talk to this web server or upstream server, return result to client
-      this.POST(request, response);
-    } else if ( request.method === "OPTIONS" ) {  // see if a redirect has been defined
-      response.writeHead( 204, { 
-          "access-control-allow-methods" : "POST, GET, PUT, DELETE"
-        ,"Access-Control-Allow-Origin"   : "*" 
-        ,"Access-Control-Allow-Headers"  : "Content-Type, Authorization"
-      } )
-      this.sessions.responseEnd(response); 
-    } else if (request.method === "GET") {
-      if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
-        this.serveFile(request, response); // serve static file
-      }
-    } else {
-      // method not supported
-      response.writeHead(200, { 'Content-Type': "text/html" });
-      this.sessions.responseEnd(response,`server does not support method  ${request.method}`);
-      app.logs.error(`server does not support method  ${request.method}`,request,response);
-    }
-  } else {
+  if ( !this.config.hosts[host] ) {
     // error, configuration file not loaded
     response.writeHead(200, { 'Content-Type': "text/html" });
     this.sessions.responseEnd(response,`server is not configured for domain ${host}`);
     app.logs.error(`configuration file: ${host}.json not found`,request,response);
+    return;
+  }
+
+  // process request
+  switch(request.method ) {
+    case "GET":
+      if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
+        this.serveFile(request, response); // serve static file
+      }
+      break;
+
+    case "POST":
+      // talk to this web server or upstream server, return result to client
+      this.POST(request, response);
+      break;
+
+    case "OPTIONS":
+      // let client know the types of request that the server will process
+      response.writeHead( 204, { 
+        "access-control-allow-methods" : "POST, GET, PUT, DELETE"
+      ,"Access-Control-Allow-Origin"   : "*" 
+      ,"Access-Control-Allow-Headers"  : "Content-Type, Authorization"
+      } )
+      this.sessions.responseEnd(response); 
+      break;
+
+    case "PUT":
+      this.restAPI.put(request, response); // update
+      break;
+
+    case "DELETE":
+      this.restAPI.delete(request, response); // delete
+      break;
+
+     default:
+      // method not supported
+      response.writeHead(200, { 'Content-Type': "text/html" });
+      this.sessions.responseEnd(response,`server does not support method  ${request.method}`);
+      app.logs.error(`server does not support method  ${request.method}`,request,response);
   }
 }
 
