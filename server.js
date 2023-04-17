@@ -172,7 +172,7 @@ requestIn(  //  serverClass - server-side
     case "OPTIONS":
       // let client know the types of request that the server will process
       response.writeHead( 204, { 
-        "access-control-allow-methods" : "POST, GET, PUT, DELETE"
+        "access-control-allow-methods" : "POST, GET, PUT, DELETE, PATCH"
       ,"Access-Control-Allow-Origin"   : "*" 
       ,"Access-Control-Allow-Headers"  : "Content-Type, Authorization"
       } )
@@ -180,7 +180,11 @@ requestIn(  //  serverClass - server-side
       break;
 
     case "PUT":
-      this.restAPI.put(request, response); // update
+      this.restAPI.put(request, response); // update by replaceing entire resource
+      break;
+
+    case "PATCH":
+      this.restAPI.patch(request, response); // update just some attribute
       break;
 
     case "DELETE":
@@ -189,7 +193,7 @@ requestIn(  //  serverClass - server-side
 
      default:
       // method not supported
-      response.writeHead(200, { 'Content-Type': "text/html" });
+      response.writeHead(400, { 'Content-Type': "text/html" });
       this.sessions.responseEnd(response,`server does not support method  ${request.method}`);
       app.logs.error(`server does not support method  ${request.method}`,request,response);
   }
