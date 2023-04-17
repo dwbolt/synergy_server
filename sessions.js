@@ -298,6 +298,10 @@ async addUser( // sessionsClass - server-side
       ,"pwdDigest" : "${this.string2digestBase64(clientMsg.pwd)}"
       ,"phone"     : "${clientMsg.phone}"
       ,"email"     : "${clientMsg.email}"
+
+      ,"publicDirectorys": {
+        "public":"public"
+        }
     }`
     await app.fsp.writeFile(`${usersDir}/${userDir}/user.json`, userData);
 
