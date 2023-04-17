@@ -80,7 +80,7 @@ async delete( // restAPI - server-side
   ,response     // HTTPS response
 ){
   const hostName   = request.headers.host.split(":")[0];
-  let   url        = request.url;
+  let   url        = decodeURI(request.url);
 
   // verify url starts with "/users/ and strip that off
   if ( url.substring(0,7) === "/users/") {
