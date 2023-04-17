@@ -20,7 +20,7 @@ async patch( // restAPI - server-side
   ,json         // data to change
 ){
   const hostName   = request.headers.host.split(":")[0];  // get hostName with out port
-  let   url        = request.url;
+  let   url        = decodeURI(request.url);
 
   // verify url starts with "/users/ and strip that off
   if ( url.substring(0,7) === "/users/") {
@@ -50,7 +50,7 @@ async put( // restAPI - server-side
   ,json         // data to change
 ){
   const hostName   = request.headers.host.split(":")[0];  // get hostName with out port
-  let   url        = request.url;
+  let   url        = decodeURI(request.url);
 
   // verify url starts with "/users/ and strip that off
   if ( url.substring(0,7) === "/users/") {
@@ -111,7 +111,7 @@ async post( // restAPI - server-side
   ,buffer       // binary data to create
 ){
   const hostName   = request.headers.host.split(":")[0];
-  let   url        = request.url;
+  let   url        = decodeURI(request.url);
 
   // verify url starts with "/users/ and strip that off
   if ( url.substring(0,7) === "/users/") {
