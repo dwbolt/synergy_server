@@ -265,12 +265,13 @@ loadConfiguration(  //  serverClass - server-side
 checkDomainDirectories(  //  serverClass - server-side
   domainConfig  // make sure all directories in config file exist
   ) {
-  
+  const spaces = "                 ";
   for(var key in domainConfig) {
+    const webkey = `   domain directory "${key}" ${spaces.slice(0,15-key.length)} = `;
     if (this.fs.existsSync(domainConfig[key].filePath)) {
-      console.log(`directory ${domainConfig[key].filePath} exists`)
+      console.log(`${webkey}${domainConfig[key].filePath} exists`)
     } else {  
-      console.log(`directory ${domainConfig[key].filePath} does not exist **********`)
+      console.log(`${webkey}${domainConfig[key].filePath} does not exist **********`)
     }
   }
 }
@@ -308,7 +309,9 @@ getFilePath( //  serverClass - server-side
   //const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
   const hostName     = url.hostname;    // just want hostname, without port #
   const subApp       = url.pathname.split("/")[1];             // get the directory or application name, if at root level, will be filename
-  const subAppConfig = this.config.hosts[hostName][ subApp ]; // try to get config for an application, will be undefined if at root level
+  const subAppConfig = (subApp === "user" ? 
+    this.config.hosts[hostName][ "users" ] :    // "user" uses the the same starting bases as "users" - this code allows only "users" to be set in the domain config file
+    this.config.hosts[hostName][ subApp  ])      // try to get config for an application, will be undefined if at root level
 
   if (url.pathname.length === 1) {
     // add default html file if only a directory is given
