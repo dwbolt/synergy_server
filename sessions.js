@@ -176,12 +176,9 @@ async login( // sessionsClass - server-side
       // user is not in users.json, login failed
       this.responseEnd(response,'{"msg":false}');
    } else  {
-     // try to load user.json from user's directtory
-     //const userDir = this.users[user];
-   //  const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
     const file = `${this.getUserDir(request, user)}/user.json`;
      try {
-       const json = require(file);
+       const json = require(file);  // try to load user.json from user's directtory
        if (json.pwdDigest === this.string2digestBase64(clientMsg.pwd)) {
         // login successful
         response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
