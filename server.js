@@ -203,7 +203,7 @@ requestIn(  //  serverClass - server-side
 loadConfiguration(  //  serverClass - server-side 
   ) { 
   // load main configuration file
-  const config  = require(this.configFile);   // ports, domains served, etc on server
+  const config  = require(process.cwd()+"/"+this.configFile);   // ports, domains served, etc on server
 
   // allow for local config overide of config params
   let configLocal = config.localConfig;       // points to local file config, allows override of main config 
@@ -227,7 +227,7 @@ loadConfiguration(  //  serverClass - server-side
   for(var h in config.hosts) {
     // load all domain configurations contained in _config.json
     try {
-      const f = `${s_configDir}${config.hosts[h]}.json`;  // get file name
+      const f = `${process.cwd()}/${s_configDir}${config.hosts[h]}.json`;  // get file name
       console.log("");
       console.log(`domain:   ${h}`);
       console.log(`  loading ${f}`);
