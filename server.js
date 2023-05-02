@@ -348,11 +348,12 @@ getFilePath( //  serverClass - server-side
 
 
 getSubAppPath( // sessionsClass - server-side
-   subApp
+   subApp  // first part of path in url
   ,request
   ){
-  const hostName = request.headers.host.split(":")[0];            // just want hostname, without port #
-  return  this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
+  const hostName = request.headers.host.split(":")[0];    // just want hostname, without port #
+  //return  this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
+  return  process.cwd() +"/"+ this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
 }
 
 

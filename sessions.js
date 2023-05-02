@@ -24,7 +24,7 @@ constructor () {  // sessionsClass - server-side
     this.serverStart  = Date.now();
 
     // load user autentication data
-    this.users        = require(`${app.config.usersDir}/users.json`);
+    this.users        = require(`${process.cwd()}/${app.config.usersDir}/users.json`);
 
     // requests
     this.requests        = 0    // increment each time a request comes in
