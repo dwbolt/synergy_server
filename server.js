@@ -122,6 +122,15 @@ async startServer() {   //  serverClass - server-side
      ,ca:   this.fs.readFileSync(`${this.config.certificates}/intermediate.cert.pem`)
       },this.requestIn.bind(app)
     ).listen(this.config.port);
+
+    if (this.config.HTTPredirect) {
+      // redirect all http requests to https
+      console.log(`redirect http on port 80 to https on 443`);
+      this.http.createServer(function (req, res) {
+        res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+        res.end();
+      }).listen(80);
+    }
   } else if ( this.config.protocol === "HTTP" ){
     this.http.createServer(this.requestIn.bind(app)).listen(this.config.port);
   } else {
