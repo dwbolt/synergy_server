@@ -37,7 +37,7 @@ async init() {
   // create log directory
   try {
     // creatre a new directory for the day
-    const dir = app.config.logDir +"/"+ new Date().toISOString().substr(0,10);
+    const dir = app.config.logDir +"/"+ new Date().toISOString().slice(0,10);
     await app.verifyPath(dir);
     this.fileStatus = 0;
 
