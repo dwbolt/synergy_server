@@ -1,10 +1,13 @@
 module.exports = class restAPI {  //  restAPI - server-side
 
 /*
+
 Create  - done with post
 Read.   - done with get
-Update  - done with put
+Update  - done with put - replace entire resource
 Delete. - done with delete
+
+Patch   - replae/add parts of a resource
 */
 
 
@@ -15,6 +18,7 @@ constructor () {  //  restAPI - server-side
 
 
 async patch( // restAPI - server-side
+  // update fields or attributes
    request      // HTTPS request
   ,response     // HTTPS response
   ,json         // data to change
@@ -45,6 +49,7 @@ async patch( // restAPI - server-side
 
 
 async put( // restAPI - server-side
+  // update file with a new version
    request      // HTTPS request
   ,response     // HTTPS response
   ,json         // data to change
@@ -75,7 +80,7 @@ async put( // restAPI - server-side
 
 
 async delete( // restAPI - server-side
-  // create resource - error if resouce already exists
+  // delete resource - error if resouce does not exists
    request      // HTTPS request
   ,response     // HTTPS response
 ){
