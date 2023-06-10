@@ -324,7 +324,7 @@ getFilePath( //  serverClass - server-side
 
   if (url.pathname.length === 1) {
     // add default html file if only a directory is given
-    url.pathname += "app.html";
+    url.pathname += "index.html";
   }
 
   // find root server path
