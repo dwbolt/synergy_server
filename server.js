@@ -467,6 +467,10 @@ async web(  //  serverClass - server-side
     this.sessions.logout(       obj, request, response);
     break;
 
+  case "logged_in":
+    this.sessions.logged_in(       obj, request, response);
+    break; 
+
   case "changePWD":
     this.sessions.changePWD(    obj, request, response);
     break;

@@ -363,6 +363,26 @@ logout(
 }
 
 
+logged_in(
+  // see if use is logged in
+  clientMsg // message from client
+ ,request   // HTTPS request
+ ,response  // HTTPS response
+) {
+ if (
+   // see if session exists
+  typeof(this.sessions[response.synergyRequest.sessionNumber])        === "undefined"  || 
+  // see if user exists
+  typeof( this.sessions[response.synergyRequest.sessionNumber].user)  === "undefined"  ||
+  // see if path lenght is zeeo
+  this.sessions[response.synergyRequest.sessionNumber].user.length    === 0
+ ) {
+  this.responseEnd(response,'{"msg":false}')
+ } else {
+  this.responseEnd(response,'{"msg":true}');
+ }
+}
+
 // 2022-02-17 potental bug, not sure what happens if cleanUp takes longer than a second to run say durring a garbage collection
 // sessionsClass - server-side
 // private - called every second to get rid of inactive sessions and requests
