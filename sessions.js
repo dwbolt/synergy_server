@@ -326,7 +326,7 @@ getUserPathPrivate( // sessionsClass - server-side
 }
 
 
-getUserPathPublic( // sessionsClass - server-side
+async getUserPathPublic( // sessionsClass - server-side
    usersDir        // points to users directory
   ,url             // is a URL object
   ) {
@@ -339,7 +339,7 @@ getUserPathPublic( // sessionsClass - server-side
   let   file =  this.users[user]    // get user path
 
   // 
-  const userConfig = require(`${usersDir}/${file}/user.json`);
+  const userConfig = JSON.parse( await app.fsp.readFile(`${usersDir}/${file}/user.json`)  );
   file            +=  "/"+ userConfig.publicDirectorys[publicDir];                    // add public mount point
 
   // return public file

@@ -142,7 +142,7 @@ async startServer() {   //  serverClass - server-side
 }
 
 
-requestIn(  //  serverClass - server-side
+async requestIn(  //  serverClass - server-side
 //  public: requests start here
    request  //
   ,response //
@@ -169,7 +169,7 @@ requestIn(  //  serverClass - server-side
   switch(request.method ) {
     case "GET":
       if ( !this.redirect(request, response) ) {  // see if a redirect has been defined
-        this.serveFile(request, response); // serve static file
+        await this.serveFile(request, response); // serve static file
       }
       break;
 
@@ -308,7 +308,7 @@ redirect( //  serverClass - server-side
 }
 
 
-getFilePath( //  serverClass - server-side
+async getFilePath( //  serverClass - server-side
   // convert URL to local server file path
    request
   ,response
@@ -343,7 +343,7 @@ getFilePath( //  serverClass - server-side
         filePath += "/"+ this.sessions.getUserPathPrivate(response);
       } else if (subApp === "user") {
         // look at user profile makeing and allow acces to public directories.
-        filePath += "/"+ this.sessions.getUserPathPublic(filePath, url); 
+        filePath += "/" + await this.sessions.getUserPathPublic(filePath, url); 
       } else if (subAppConfig.class) {
         // don not think this is this used now - dwb
         filePath  = app[subAppConfig.class].getFilePath(request,response); 
@@ -370,7 +370,7 @@ async serveFile(  //  serverClass - server-side
   request
   , response
   ) { // private:serve static file. could be html, JSON, etc
-  const filePath = this.getFilePath(request, response);
+  const filePath = await this.getFilePath(request, response);
 
   // lookup mimeType
   var extname = String(this.path.extname(filePath)).toLowerCase();
