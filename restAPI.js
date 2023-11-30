@@ -31,8 +31,8 @@ async patch( // restAPI - server-side
        url = url.substring(7);
   } else {
     // error, only allow upload to user space
-    this.logs.error(`restAPI.put client tried updating ${request.url}`);
-    this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
+    app.logs.error(`restAPI.put client tried updating ${request.url}`,request,response);
+    app.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
     return;
   }
 
@@ -62,8 +62,8 @@ async put( // restAPI - server-side
        url = url.substring(7);
   } else {
     // error, only allow upload to user space
-    this.logs.error(`restAPI.put client tried updating ${request.url}`);
-    this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
+    app.logs.error(`restAPI.put client tried updating ${request.url}`,request,response);
+    app.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
     return;
   }
 
@@ -92,8 +92,8 @@ async delete( // restAPI - server-side
        url = url.substring(7);
   } else {
     // error, only allow upload to user space
-    this.logs.error(`server.js uploadFile client tried uploading ${obj.path}`);
-    this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
+    app.logs.error(`server.js uploadFile client tried uploading ${obj.path}`,request,response);
+    app.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
     return;
   }
 
@@ -123,8 +123,8 @@ async post( // restAPI - server-side
        url = url.substring(7);
   } else {
     // error, only allow upload to user space
-    this.logs.error(`server.js uploadFile client tried uploading ${obj.path}`);
-    this.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
+    app.logs.error(`error - file="server.js" method="post" url="${url}" can only update /users/ files`,request,response);
+    app.sessions.responseEnd(response,'{"success":false, "message":"path must start with /users"}');
     return;
   }
 
