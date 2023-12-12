@@ -62,6 +62,7 @@ async patch( // restAPI - server-side
     // will append to file, used currentlyf to csv,
       const stream    = app.fs.createWriteStream( pathWithfileName, {flags: 'a'}); // append to file
       stream.write(buffer);
+      stream.end();
       app.sessions.responseEnd(response,'{"success":true, "message":"file patched"}');
     } catch (e) {
       app.logs.error(`file="restAPI.js" methos="patch" error ="${e}"`);
