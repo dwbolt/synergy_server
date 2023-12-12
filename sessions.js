@@ -371,9 +371,9 @@ logged_in(
 ) {
  if (
    // see if session exists
-  typeof(this.sessions[response.synergyRequest.sessionNumber])        === "undefined"  || 
+  this.sessions[response.synergyRequest.sessionNumber]      === undefined || 
   // see if user exists
-  typeof( this.sessions[response.synergyRequest.sessionNumber].user)  === "undefined"  ||
+  this.sessions[response.synergyRequest.sessionNumber].user  === undefined  ||
   // see if path lenght is zeeo
   this.sessions[response.synergyRequest.sessionNumber].user.length    === 0
  ) {

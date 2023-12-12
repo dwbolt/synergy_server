@@ -147,7 +147,7 @@ async requestIn(  //  serverClass - server-side
    request  //
   ,response //
 ) {
-  if (typeof(request.headers.host) === "undefined") {
+  if (request.headers.host === undefined) {
     // not sure how a request can come in withoht a host, but about 6 a day come in and crash the server.  This prevents the requests from crashing the server
     app.sessions.headerUndefined++; // keep track of how many come in
     return;   // do not process request
@@ -512,7 +512,6 @@ POST(        // serverClass - server-side
       // assume string
       body += chunk.toString(); // convert Buffer to string
     }
-
   });
   
   request.on('end', () => {
