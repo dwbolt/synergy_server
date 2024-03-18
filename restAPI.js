@@ -125,8 +125,18 @@ async delete( // restAPI - server-side
   const pathWithfileName = `${app.config.hosts[hostName].users.filePath}/${app.sessions.getUserPathPrivate(response)}/${url}`;  // will include file name
 
   try {
-   await app.fsp.unlink(`${pathWithfileName}`); // save the file using app.fs.writeFile
-   app.sessions.responseEnd(response,'{"success":true, "message":"file deleted"}');
+   const status = await app.fsp.lstat(pathWithfileName);  // see if we are deleted a folder or a file
+   if        (status.isFile()) {
+    await app.fsp.rm(`${pathWithfileName}`,{recursive: true}); // remove file
+    //await app.fsp.unlink(`${pathWithfileName}`); 
+    app.sessions.responseEnd(response,`{"success":true, "message":"file removed = ${pathWithfileName}"}`);
+   } else if (status.isDirectory()) {
+    await app.fsp.rm(`${pathWithfileName}`,{recursive: true}); // save the file using app.fs.writeFile
+    app.sessions.responseEnd(response,`{"success":true, "message":"Direcotory removed = ${pathWithfileName}"}`);
+   } else {
+    app.logs.error(`file="restAPI.js" method="delete" error="${status}"`);
+    app.sessions.responseEnd(response,`{"success":false, "message":"status= ${status}"}`);
+   }
   } catch (e) {
     app.logs.error(`file="restAPI.js" method="delete" error="${e}"`);
     app.sessions.responseEnd(response,`{"success":false, "message":"error = ${e}"}`);
