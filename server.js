@@ -96,7 +96,7 @@ constructor ( //  serverClass - server-side
 
 
 async startServer() {   //  serverClass - server-side
-  this.configFile   = process.argv[process.argv.indexOf('-config') + 1];  // get config file path from command line
+  this.config_dir   = process.argv[process.argv.indexOf('-config') + 1];  // get config file path from command line
   this.config       = this.loadConfiguration();                           // load config for server and domains
 
   this.sessions = new (require('./sessions.js'));   // keep track of sessions, requests and responses
@@ -212,7 +212,8 @@ async requestIn(  //  serverClass - server-side
 loadConfiguration(  //  serverClass - server-side 
   ) { 
   // load main configuration file
-  const config  = require(process.cwd()+"/"+this.configFile);   // ports, domains served, etc on server
+  //const config  = require(process.cwd()+"/"+this.config_dir);   // ports, domains served, etc on server
+  const config  = require(this.config_dir+"/_config.json");   // ports, domains served, etc on server
 
   // allow for local config overide of config params
   let configLocal = config.localConfig;       // points to local file config, allows override of main config 
@@ -231,12 +232,13 @@ loadConfiguration(  //  serverClass - server-side
 
   // load domain directory paths and make sure they are there
   // domain configuration files are in the same directrory as the main config file
-  const s_configDir = this.configFile.substring(0, this.configFile.search("_config.json") )
+  //const s_configDir = this.config_dir.substring(0, this.config_dir.search("_config.json") )
    // load configurative file for each domain
   for(var h in config.hosts) {
     // load all domain configurations contained in _config.json
     try {
-      const f = `${process.cwd()}/${s_configDir}${config.hosts[h]}.json`;  // get file name
+      //const f = `${process.cwd()}/${s_configDir}${config.hosts[h]}.json`;  // get file name
+      const f = `${this.config_dir}/${config.hosts[h]}.json`;  // get file name
       console.log("");
       console.log(`domain:   ${h}`);
       console.log(`  loading ${f}`);
@@ -362,7 +364,8 @@ getSubAppPath( // sessionsClass - server-side
   ){
   const hostName = request.headers.host.split(":")[0];    // just want hostname, without port #
   //return  this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
-  return  process.cwd() +"/"+ this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
+  //return  process.cwd() +"/"+ this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
+  return this.config.hosts[hostName][ subApp ].filePath; // try to get config for an application
 }
 
 
