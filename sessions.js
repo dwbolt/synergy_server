@@ -333,18 +333,18 @@ async getUserPathPublic( // sessionsClass - server-side
   
   const urlParts  = url.pathname.split("/",3);  // break url into array
   const user      = urlParts[1];       // userid 
-  const publicDir = urlParts[2]        // name of public point
+  const publicDir = urlParts[2]        // name of public point, will be replaced with 
   const length    = 2 + user.length + publicDir.length;
-  
-  let   file =  this.users[user]    // get user path
+  const path      =  this.users[user]    // get user path
 
   // 
-  const userConfig = JSON.parse( await app.fsp.readFile(`${usersDir}/${file}/user.json`)  );
-  file            +=  "/"+ userConfig.publicDirectorys[publicDir];                    // add public mount point
+  const configfile = await app.fsp.readFile(`${usersDir}/${path}/user.json`);
+  const userConfig = JSON.parse( configfile );
+  const file       =  "/"+ userConfig.publicDirectorys[publicDir];                    // add public mount point
 
   // return public file
   url.pathname = url.pathname.slice(length);  // take off user and publicDir 
-  return file;
+  return path+file;
 }
 
 

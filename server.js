@@ -347,14 +347,14 @@ async getFilePath( //  serverClass - server-side
         // look at user profile makeing and allow acces to public directories.
         filePath += "/" + await this.sessions.getUserPathPublic(filePath, url); 
       } else if (subAppConfig.class) {
-        // don not think this is this used now - dwb
+        // do not think this is this used now - dwb
         filePath  = app[subAppConfig.class].getFilePath(request,response); 
       }
   } else {
     filePath = this.config.hosts[hostName][""].filePath;  // get the default path
   }
 
-  return filePath+url.pathname;
+  return filePath+url.pathname;  // return local file path for url
 }
 
 
