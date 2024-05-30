@@ -37,12 +37,11 @@ async patch( // restAPI - server-side
       }
     } else {
       // assume string
-      body += chunk.toString(); // convert Buffer to string
+      body += chunk.toString(); // convert Buffer to string ------------ body not used, looks like a dead end
     }
   });
   
   request.on('end', () => {
-    //if (request.headers["content-type"] === "application/octet-stream") {
     const hostName   = request.headers.host.split(":")[0];  // get hostName with out port
     let   url        = decodeURI(request.url);
   
@@ -59,7 +58,7 @@ async patch( // restAPI - server-side
     const pathWithfileName = `${app.config.hosts[hostName].users.filePath}/${app.sessions.getUserPathPrivate(response)}/${url}`;  // will include file name
   
     try {
-    // will append to file, used currentlyf to csv,
+    // will append to file njs file,
       const stream    = app.fs.createWriteStream( pathWithfileName, {flags: 'a'}); // append to file
       stream.write(buffer);
       stream.end();
