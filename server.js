@@ -104,11 +104,11 @@ async startServer() {   //  serverClass - server-side
   this.sync     = new (require('./sync.js'    ));   // support clients server sync with other clients
   this.restAPI  = new (require('./restAPI'    ));
 
-  await this.logs.init();
+  await this.logs.init();  // create log streams
 
   // start timers
-  setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);  // delete inactive sessions
-  setInterval(     app.logs.summary.bind(app.logs)    , 5000);  // over write daily summary log
+  setInterval( app.sessions.cleanUp.bind(app.sessions), 1000);  // delete inactive sessions every second
+  setInterval(     app.logs.summary.bind(app.logs)    , 5000);  // over write daily summary log every 5 seconds
 
   app.logs.error(`server started`);  // only an error if pm2 is restarting sever
 

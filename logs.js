@@ -25,25 +25,23 @@ every second the create() function runs to se
 */
 
 
-//  logClass - server-side
-constructor () {
+constructor () {  //  logClass - server-side
   // logging server & domain
   this.logDir     = app.config.logDir;        // string for location of log file
 }
 
-//  logClass - server-side
-// create log files if needed
-async init() {
+
+async init() {  
   // create log directory
   try {
     // creatre a new directory for the day
     const dir = app.config.logDir +"/"+ new Date().toISOString().slice(0,10);
     await app.verifyPath(dir);
-    this.fileStatus = 0;
+    //this.fileStatus = 0;
 
-    this.fsError    = app.fs.createWriteStream(dir + "/error.csv"   , {flags: 'a'});
-    this.fsRequest  = app.fs.createWriteStream(dir + "/request.csv" , {flags: 'a'});
-    this.fsResponse = app.fs.createWriteStream(dir + "/response.csv", {flags: 'a'});
+    this.fsError    = app.fs.createWriteStream(dir + "/error.njs"   , {flags: 'a'});
+    this.fsRequest  = app.fs.createWriteStream(dir + "/request.njs" , {flags: 'a'});
+    this.fsResponse = app.fs.createWriteStream(dir + "/response.njs", {flags: 'a'});
     this.summaryFile=                          dir + "/summary.json";  // string for location of log file
 
     await app.sessions.initSummary(this.summaryFile);
@@ -53,13 +51,14 @@ async init() {
   }
 }
 
-ready(file) {
+/*
+ready(file) {  //  logClass - server-side
   console.log(++this.fileStatus);
 }
+*/
 
 
-//  logClass - server-side
-error(msg, request, response) {
+error(msg, request, response) {  //  logClass - server-side
   let sessionNumber=null,requestNumber=null;
   // append message to log file
   if (response) {
@@ -67,22 +66,37 @@ error(msg, request, response) {
     sessionNumber = response.synergyRequest.sessionNumber;
     requestNumber = response.synergyRequest.requestNumber;
   }
-  this.write( this.fsError, `"${sessionNumber}","${requestNumber}","${msg}"` );
+  this.write( this.fsError,  [sessionNumber, requestNumber, msg] );
 }
 
 
-//  logClass - server-side
-request(request,response) {
+request(request,response) {  //  logClass - server-side
   // append message to log file
-  this.write(this.fsRequest,`${response.synergyRequest.sessionNumber},${response.synergyRequest.requestNumber},"${request.method}","${request.headers.host}","${request.url}"`);
+  this.write(this.fsRequest,[this.to_number(response.synergyRequest.sessionNumber), response.synergyRequest.requestNumber, request.method, request.headers.host, request.url]);
 }
 
 
-//  logClass - server-side
-response(obj){
-  this.write(this.fsResponse,
-      `${obj.sessionKey},${obj.requestNum},${obj.start},${obj.lastRequest},${obj.duration},"${obj.ip}","${obj.method}","${obj.url}",${obj.bytesSent}`
-    );
+response(obj){  //  logClass - server-side
+  this.write(this.fsResponse, [this.to_number(obj.sessionKey), obj.requestNum, obj.start, obj.lastRequest, obj.duration, obj.ip, obj.method, obj.url, obj.bytesSent]);
+}
+
+
+to_number(obj) { //  logClass - server-side
+  const t = typeof(obj);
+  switch (t) {
+    case "number":
+      return obj
+      break;
+
+    case "string":
+      return parseInt(obj)
+      break;
+  
+    default:
+      // error
+      this.error(`file="logs.js", method="to_number", t="${t}"`);
+      break;
+  }
 }
 
 
@@ -105,13 +119,13 @@ async summary() {
 }
 
 
-write(stream,msg){
+write(stream, json_array){
   // adding date and convert to CSV format (commas and quotes to mssage)
-  const m = `"${new Date().toISOString()}",${msg}\r\n`;
+  json_array.push(new Date().toISOString());  // add server timespame
+  const m = JSON.stringify(json_array) + `\n`  // add newline so file can be parsed
 
   if (stream) {
-    // add end of line to mssage
-    stream.write(`${m}`);
+    stream.write(m);
   } else {
     // log error to consle since stream does not exist (we have a bug if this happens)
     console.log(m);
