@@ -50,6 +50,7 @@ constructor ( //  serverClass - server-side
   this.mimeTypes = {
       '.html': 'text/html',
       '.js'  : 'text/javascript',
+      '.mjs' : 'text/javascript',
       '.css' : 'text/css',
       '.json': 'application/json',
       '.pdf' : 'application/pdf',
