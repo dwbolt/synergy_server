@@ -390,9 +390,12 @@ async serveFile(  //  serverClass - server-side
     if(e.code == 'ENOENT'){
         // file not found
         response.writeHead(404, { 'Content-Type': contentType });
+        content = `file not found for url="${request.url}"`;
+/*
         content = `
           <meta http-equiv="Refresh" content="0; url='/app.html?p=page-not-found&url=${request.url}'" />
           <p>Redirect to new url</p>`;
+          */
         app.logs.error(`app.serveFile() file not found - ${filePath}`,request, response);
     } else {
         // server error -- 500 is assumed, pull these from the error.()
