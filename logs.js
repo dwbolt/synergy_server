@@ -38,15 +38,23 @@ async init() {
     const dir = app.config.logDir +"/"+ new Date().toISOString().slice(0,10);
     await app.verifyPath(dir);
 
+    // client erros
+    this.fsError_client  = app.fs.createWriteStream(dir + "/error_client.njs"   , {flags: 'a'});  
+    this.write( this.fsError_client,"h",  ["session #", "request#", "messsage"] );
+
+    // server errors
     this.fsError    = app.fs.createWriteStream(dir + "/error.njs"   , {flags: 'a'});
     this.write( this.fsError,"h",  ["session #", "request#", "messsage"] );
 
+    // client requests
     this.fsRequest  = app.fs.createWriteStream(dir + "/request.njs" , {flags: 'a'});
     this.write(this.fsRequest,"h",["session #", "request #", "method", "host", "url"]);
 
+    // client responses
     this.fsResponse = app.fs.createWriteStream(dir + "/response.njs", {flags: 'a'});
     this.write(this.fsResponse,"h", ["Session #", "Request #", "Start", "Last Request", "Duration", "ip", "Method", "URL", "bytes"]);
 
+    // overwritten every few seconds
     this.summaryFile=                          dir + "/summary.json";  // string for location of log file
 
     await app.sessions.initSummary(this.summaryFile);
@@ -54,6 +62,18 @@ async init() {
     // if there is a problem with the log file, then an error will be generated on each server request/response cycle
     console.log("logClass.init err="+e);
   }
+}
+
+
+error_client(msg, request, response) {  //  logClass - server-side
+  let sessionNumber=null,requestNumber=null;
+  // append message to log file
+  if (response) {
+    // error was from request from user
+    sessionNumber = response.synergyRequest.sessionNumber;
+    requestNumber = response.synergyRequest.requestNumber;
+  }
+  this.write( this.fsError_client,"a",  [sessionNumber, requestNumber, msg] );
 }
 
 

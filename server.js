@@ -476,6 +476,10 @@ async web(  //  serverClass - server-side
 
   case "logged_in":
     this.sessions.logged_in(       obj, request, response);
+    break;
+
+  case "client_error":
+    this.logs.error_client(obj.msg_client, request, response);
     break; 
 
   case "changePWD":

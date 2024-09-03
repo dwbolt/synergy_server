@@ -18,7 +18,7 @@ constructor () {  //  restAPI - server-side
 
 
 async patch( // restAPI - server-side
-  // this will append, review semantices, may want to change this in the futureå
+  // this will append, review semantices, may want to change this in the future
   // update fields or attributes
    request      // HTTPS request
   ,response     // HTTPS response
