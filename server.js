@@ -453,12 +453,6 @@ async uploadFile(  // class server - server-side
 }
 
 
-async userFile(  //  serverClass - server-side
-  obj, request, response) {
-
-}
-
-
 async web(  //  serverClass - server-side
   // private: process request
    obj
@@ -466,37 +460,31 @@ async web(  //  serverClass - server-side
   ,response
   ) {
   switch (obj.msg) {
-  case "login":
-    this.sessions.login(       obj, request, response);
-    break;
-
   case "logout":
-    this.sessions.logout(       obj, request, response);
-    break;
-
+  case "login":
   case "logged_in":
-    this.sessions.logged_in(       obj, request, response);
+  case "changePWD":
+  case "addUser":
+    this.sessions[obj.msg](       obj, request, response);
     break;
 
   case "client_error":
     this.logs.error_client(obj.msg_client, request, response);
     break; 
 
-  case "changePWD":
-    this.sessions.changePWD(    obj, request, response);
-    break;
-
-  case "addUser":
-    await this.sessions.addUser(obj, request, response );
-    break;
-
   case "sync":
     await this.sync.manifest(     obj, request, response);
     break;
 
+  case "dir":
+    await this.sync.dir(     obj, request, response);
+    break;
+  
+
   case "uploadFile":
     await this.uploadFile(     obj, request, response);
     break;
+
 
   default:
     app.logs.error( `"Error: server.web, message = '${obj.msg}"`       ,request, response );
@@ -570,11 +558,6 @@ async verifyPath(   // serverClass - server-side
   } catch (e) {
     app.logs.error(`erverClass.verifyPath error = ${e}`);
   }
-}
-
-
-userData(){ // class server return user data
-
 }
 
 
