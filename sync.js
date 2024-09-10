@@ -44,7 +44,7 @@ async dir(   //sync - server-side
 
   const obj = []
   request.url = msg.url; // not sure of side effects on changing value
-  const directoryRead = await app.getFilePath(request,response);
+  const directoryRead = decodeURIComponent(await app.getFilePath(request,response));  // may contain url esc charactor, need to remove
   const childOfHiddenDirectory = false
 
   const files = app.fs.readdirSync(directoryRead);
