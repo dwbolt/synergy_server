@@ -71,7 +71,7 @@ async dir(   //sync - server-side
        // this.getAllFiles(dirFile, true );   // recursice
       } else {
         // not hidden directory
-        obj.push([file,stat]);
+        obj.push([file,true,stat]);
       }
     } else if (file[0]==='.' || childOfHiddenDirectory) {
       // hidden file or childOfHiddenDirectory
@@ -79,7 +79,7 @@ async dir(   //sync - server-side
       //this.streamH.write(`"${dirFile}"\r\n`);
     } else {
       // assume a regulare file
-      obj.push([file,stat]);
+      obj.push([file,false,stat]);
 
       // inode,size, disk size,"last access date", creation date", "path with file name"
       //let url="do to";
