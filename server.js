@@ -213,7 +213,6 @@ async requestIn(  //  serverClass - server-side
 loadConfiguration(  //  serverClass - server-side 
   ) { 
   // load main configuration file
-  //const config  = require(process.cwd()+"/"+this.config_dir);   // ports, domains served, etc on server
   const config  = require(this.config_dir+"/_config.json");   // ports, domains served, etc on server
 
   // allow for local config overide of config params
