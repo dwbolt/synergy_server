@@ -35,23 +35,28 @@ async direct( //  sync - server-side
 async dir(   //sync - server-side
   // return info about files in direcory url
   msg  // msg.server : sync
-  // msg.method      : dir
-  // msg.url :
+       // msg.method      : dir
+       // msg.url :
 ,request      // HTTPS request
 ,response     // HTTPS response
 ) {
+  let   success                = true;
+  const obj                    = []                                                         ; // lit of fles and responses to return
+  request.url                  = msg.url                                                    ; // not sure of side effects on changing value
+  const directoryRead          = decodeURIComponent(await app.getFilePath(request,response)); // may contain url esc charactor, need to remove
+  const childOfHiddenDirectory = false                                                      ; // do not include hidden files
 
+  let files = [];
+  try {
+    files = app.fs.readdirSync(directoryRead)                                           ;  // get list of all files in directory
+  } catch (error) {
+    success = false;
+    // log error on server - 
+    app.logs.error(error,request,response);  // only an error if pm2 is restarting sever
+  }
 
-  const obj = []
-  request.url = msg.url; // not sure of side effects on changing value
-  const directoryRead = decodeURIComponent(await app.getFilePath(request,response));  // may contain url esc charactor, need to remove
-  const childOfHiddenDirectory = false
-
-  const files = app.fs.readdirSync(directoryRead);
-
+  // walk each file in directory
   files.forEach((file) => {
-
-  
     const dirFile = `${directoryRead}/${file}`;
     const stat    = app.fs.statSync(dirFile);  // should this be converted to a an async version?
 
@@ -89,17 +94,8 @@ async dir(   //sync - server-side
     }
   });
 
-
-
-
-
-
-
-
-
-
   // give client statues
-  app.sessions.responseEnd(response, JSON.stringify({"msg": true, "files": obj}));
+  app.sessions.responseEnd(response, JSON.stringify({"msg": success, "files": obj}));
 
 }
 
