@@ -160,9 +160,13 @@ async requestIn(  //  serverClass - server-side
   const host = request.headers.host.split(":")[0];  // get rid of port# if it is there
   if ( !this.config.hosts[host] ) {
     // error, configuration file not loaded
+    response.destroy();   // silent drop
+    app.logs.error(`silent drop - configuration file: ${host}.json not found - `,request,response);
+    /*
     response.writeHead(200, { 'Content-Type': "text/html" });
     this.sessions.responseEnd(response,`server is not configured for domain ${host}`);
     app.logs.error(`configuration file: ${host}.json not found`,request,response);
+    */
     return;
   }
 
