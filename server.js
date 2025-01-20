@@ -215,6 +215,7 @@ async requestIn(  //  serverClass - server-side
 
 
 loadConfiguration(  //  serverClass - server-side 
+  /** refactor replace require with  */
   ) { 
   // load main configuration file
   const config  = require(this.config_dir+"/_config.json");   // ports, domains served, etc on server

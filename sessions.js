@@ -24,7 +24,7 @@ constructor () {  // sessionsClass - server-side
     this.serverStart  = Date.now();
 
     // load user autentication data
-    this.users        = require(`${app.config.usersDir}/users.json`);
+    this.users        = require(`${app.config.usersDir}/users.json`); /** refactor replace require */
 
     // requests
     this.requests        = 0    // increment each time a request comes in
@@ -178,7 +178,7 @@ async login( // sessionsClass - server-side
    } else  {
     const file = `${this.getUserDir(request, user)}/user.json`;
      try {
-       const json = require(file);  // try to load user.json from user's directtory
+       const json = require(file);  // refactor - replace require - try to load user.json from user's directtory
        if (json.pwdDigest === this.string2digestBase64(clientMsg.pwd)) {
         // login successful
         response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
@@ -235,7 +235,7 @@ async changePWD( // sessionsClass - server-side
      const userDir = this.users[user];
      const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
      try {
-       const json = require(file);
+       const json = require(file); /** refactor, replace require  */
        const digest = this.string2digestBase64(clientMsg.pwd);
        if (json.pwdDigest === digest) {
         // store s_digest
@@ -271,40 +271,40 @@ async addUser( // sessionsClass - server-side
     return;
   }
 
-    // add user to json 
-    const year = new Date().getFullYear().toString();
-    let next   = this.users[year] || 1;  // init to 1 if no users exixt for current year
+  // add user to json 
+  const year = new Date().getFullYear().toString();
+  let next   = this.users[year] || 1;  // init to 1 if no users exixt for current year
 
-    const userDir              = `${year}/${next}-${clientMsg.nameLast},${clientMsg.nameFirst}`;
-    this.users[clientMsg.user] = userDir;
-    this.users[year]           = ++next;  // increment the next userer number
+  const userDir              = `${year}/${next}-${clientMsg.nameLast},${clientMsg.nameFirst}`;
+  this.users[clientMsg.user] = userDir;
+  this.users[year]           = ++next;  // increment the next userer number
 
-    // save updated user file to file
-    await app.fsp.writeFile(`${app.config.usersDir}/users.json`, JSON.stringify(this.users));
+  // save updated user file to file
+  await app.fsp.writeFile(`${app.config.usersDir}/users.json`, JSON.stringify(this.users));
 
-    // copy user timeplate direcory to new user directory
-    const usersDir = app.getSubAppPath("users",request);
-    await app.fsp.cp(`${app.config.usersDir}/_template`, `${usersDir}/${userDir}`, {recursive: true})
+  // copy user timeplate direcory to new user directory
+  const usersDir = app.getSubAppPath("users",request);
+  await app.fsp.cp(`${app.config.usersDir}/_template`, `${usersDir}/${userDir}`, {recursive: true})
 
-    // add user json file with salted passord
-    const userData = `
-    {
-       "user"      : "${clientMsg.user}"
-      ,"nameFirst" : "${clientMsg.nameFirst}"
-      ,"nameLast"  : "${clientMsg.nameLast}"
-      ,"pwdDigest" : "${this.string2digestBase64(clientMsg.pwd)}"
-      ,"phone"     : "${clientMsg.phone}"
-      ,"email"     : "${clientMsg.email}"
+  // add user json file with salted passord
+  const userData = `
+  {
+      "user"      : "${clientMsg.user}"
+    ,"nameFirst" : "${clientMsg.nameFirst}"
+    ,"nameLast"  : "${clientMsg.nameLast}"
+    ,"pwdDigest" : "${this.string2digestBase64(clientMsg.pwd)}"
+    ,"phone"     : "${clientMsg.phone}"
+    ,"email"     : "${clientMsg.email}"
 
-      ,"publicDirectorys": {
-        "public":"public"
-        }
-    }`
-    await app.fsp.writeFile(`${usersDir}/${userDir}/user.json`, userData);
+    ,"publicDirectorys": {
+      "public":"public"
+      }
+  }`
+  await app.fsp.writeFile(`${usersDir}/${userDir}/user.json`, userData);
 
 
-    // reposond to browser client
-    this.responseEnd(response,`{"msg":true, "comment":"User ${clientMsg.user} Added"}`);
+  // reposond to browser client
+  this.responseEnd(response,`{"msg":true, "comment":"User ${clientMsg.user} Added"}`);
 }
 
 
