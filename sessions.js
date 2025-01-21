@@ -178,6 +178,7 @@ async login( // sessionsClass - server-side
    } else  {
     const file = `${this.getUserDir(request, user)}/user.json`;
      try {
+       delete require.cache[require.resolve(file)];  // remove from cashe to force a reload
        const json = require(file);  // refactor - replace require - try to load user.json from user's directtory
        if (json.pwdDigest === this.string2digestBase64(clientMsg.pwd)) {
         // login successful
@@ -235,6 +236,7 @@ async changePWD( // sessionsClass - server-side
      const userDir = this.users[user];
      const file = `${app.getSubAppPath("users",request)}/${userDir}/user.json`;
      try {
+       delete require.cache[require.resolve(file)];
        const json = require(file); /** refactor, replace require  */
        const digest = this.string2digestBase64(clientMsg.pwd);
        if (json.pwdDigest === digest) {
@@ -258,7 +260,7 @@ async changePWD( // sessionsClass - server-side
 }
 
 
-async addUser( // sessionsClass - server-side
+async user_add( // sessionsClass - server-side
    clientMsg // message from client
  , request    // HTTPS request
  , response   // HTTPS response

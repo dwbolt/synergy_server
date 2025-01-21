@@ -468,7 +468,7 @@ async web(  //  serverClass - server-side
   case "login":
   case "logged_in":
   case "changePWD":
-  case "addUser":
+  case "user_add":
     this.sessions[obj.msg](       obj, request, response);
     break;
 
