@@ -175,6 +175,7 @@ async login( // sessionsClass - server-side
    if (!this.users[user]) {
       // user is not in users.json, login failed
       this.responseEnd(response,'{"msg":false}');
+      app.logs.error(`sessions.login failed user "${user}" not in this.users[users] `  ,request,response);
    } else  {
     const file = `${this.getUserDir(request, user)}/user.json`;
      try {
@@ -188,9 +189,10 @@ async login( // sessionsClass - server-side
         this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
       } else {
         this.responseEnd(response,'{"msg":false}');
+        app.logs.error(`sessions.login pwdDigest failed user ${user}`  ,request,response);
       }
      } catch (e) {
-       app.logs.error(`sessions.login open ${file} error=${e}`  ,request,response)
+       app.logs.error(`sessions.login require ${file} error=${e}`  ,request,response);
        this.responseEnd(response,'{"msg":false}');
      }
    }
@@ -243,17 +245,12 @@ async changePWD( // sessionsClass - server-side
         // store s_digest
         json.pwdDigest = this.string2digestBase64(clientMsg.pwdNew);
         await app.fsp.writeFile(file, JSON.stringify(json)); // save the file using app.fs.writeFile
-
-        // login successful
-        //response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
         this.responseEnd(response,`{"msg":true, "comment":"password changed"}`);
-        // store user with their session
-        //this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
       } else {
         this.responseEnd(response,'{"msg":false}');
       }
      } catch (e) {
-       app.logs.error(`sessions.login open ${file} error=${e}`  ,request,response)
+       app.logs.error(`sessions.changePWD require ${file} error=${e}`  ,request,response)
        this.responseEnd(response,'{"msg":false}');
      }
    }

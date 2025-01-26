@@ -322,12 +322,11 @@ async getFilePath( //  serverClass - server-side
   ) {  // return local file path for url
   let url = new URL(app.config.protocol +"://"+ request.headers.host + request.url);  // take care of convert %20 and other escape chacrters to string
 
-  //const hostName     = request.headers.host.split(":")[0];    // just want hostname, without port #
   const hostName     = url.hostname;    // just want hostname, without port #
   const subApp       = url.pathname.split("/")[1];             // get the directory or application name, if at root level, will be filename
   const subAppConfig = (subApp === "user" ? 
     this.config.hosts[hostName][ "users" ] :    // "user" uses the the same starting bases as "users" - this code allows only "users" to be set in the domain config file
-    this.config.hosts[hostName][ subApp  ])      // try to get config for an application, will be undefined if at root level
+    this.config.hosts[hostName][ subApp  ])     // try to get config for an application, will be undefined if at root level
 
   if (url.pathname.length === 1) {
     // add default html file if only a directory is given
