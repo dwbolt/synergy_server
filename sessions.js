@@ -170,7 +170,31 @@ async login( // sessionsClass - server-side
   ,request   // HTTPS request
   ,response  // HTTPS response
 ){
-  const user = clientMsg.user;
+
+  try {
+    const file_name = `${app.config.usersDir}/${clientMsg.user}/_.json`;      // file_name to load
+    const content   = await app.fsp.readFile(file_name);                     // try to file, load user info from file
+    const json      = JSON.parse(content);                                    // convert file to json
+    const user      = json.name_user;
+
+    if (json.digest === this.string2digestBase64(clientMsg.pwd)) {
+      // login successful
+      response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
+      this.responseEnd(response,`{"msg":true, "nameFirst":"${json.name_first}", "nameLast":"${json.name_last}"}`);
+      // store user with their session
+      //this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
+      this.sessions[response.synergyRequest.sessionNumber].user = json;  // save data of logined user with session
+    } else {
+      this.responseEnd(response,'{"msg":false}');
+      app.logs.error(`sessions.login pwdDigest failed user ${user}`  ,request,response);
+    }
+  } catch (error) {
+    app.logs.error(`sessions.login loading ${file_name} error=${e}`  ,request,response);
+    this.responseEnd(response,'{"msg":false}');
+  }
+
+
+  /*
   // see if user
    if (!this.users[user]) {
       // user is not in users.json, login failed
@@ -196,6 +220,7 @@ async login( // sessionsClass - server-side
        this.responseEnd(response,'{"msg":false}');
      }
    }
+   */
 }
 
 
@@ -321,7 +346,7 @@ string2digestBase64(  // sessionsClass - server-side
 getUserPathPrivate( // sessionsClass - server-side
   response) {
   // return the logged in users data path
-  return this.sessions[response.synergyRequest.sessionNumber].user;
+  return this.sessions[response.synergyRequest.sessionNumber].user.path;
 }
 
 
