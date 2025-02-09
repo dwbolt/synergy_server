@@ -23,9 +23,6 @@ constructor () {  // sessionsClass - server-side
     // static
     this.serverStart  = Date.now();
 
-    // load user autentication data
-    this.users        = require(`${app.config.usersDir}/users.json`); /** refactor replace require */
-
     // requests
     this.requests        = 0    // increment each time a request comes in
     this.openRequests    = [];  // Requests that are still processing
@@ -182,7 +179,6 @@ async login( // sessionsClass - server-side
       response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
       this.responseEnd(response,`{"msg":true, "nameFirst":"${json.name_first}", "nameLast":"${json.name_last}"}`);
       // store user with their session
-      //this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
       this.sessions[response.synergyRequest.sessionNumber].user = json;  // save data of logined user with session
     } else {
       this.responseEnd(response,'{"msg":false}');
@@ -192,38 +188,13 @@ async login( // sessionsClass - server-side
     app.logs.error(`sessions.login loading ${file_name} error=${e}`  ,request,response);
     this.responseEnd(response,'{"msg":false}');
   }
-
-
-  /*
-  // see if user
-   if (!this.users[user]) {
-      // user is not in users.json, login failed
-      this.responseEnd(response,'{"msg":false}');
-      app.logs.error(`sessions.login failed user "${user}" not in this.users[users] `  ,request,response);
-   } else  {
-    const file = `${this.getUserDir(request, user)}/user.json`;
-     try {
-       delete require.cache[require.resolve(file)];  // remove from cashe to force a reload
-       const json = require(file);  // refactor - replace require - try to load user.json from user's directtory
-       if (json.pwdDigest === this.string2digestBase64(clientMsg.pwd)) {
-        // login successful
-        response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
-        this.responseEnd(response,`{"msg":true, "nameFirst":"${json.nameFirst}", "nameLast":"${json.nameLast}"}`);
-        // store user with their session
-        this.sessions[response.synergyRequest.sessionNumber].user = this.users[user];  // save data of logined user with session
-      } else {
-        this.responseEnd(response,'{"msg":false}');
-        app.logs.error(`sessions.login pwdDigest failed user ${user}`  ,request,response);
-      }
-     } catch (e) {
-       app.logs.error(`sessions.login require ${file} error=${e}`  ,request,response);
-       this.responseEnd(response,'{"msg":false}');
-     }
-   }
-   */
 }
 
+user_info(response){
+  return this.sessions[response.synergyRequest.sessionNumber].user ;  // returns json associated with user request
+}
 
+/* does not seemed to be used 2025-02-09
 getUserDir(  // sessionsClass - server-side
   request     //
   ,user
@@ -235,7 +206,7 @@ getUserDir(  // sessionsClass - server-side
   const userDir = this.users[user];
   return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
 }
-
+*/
 
 getLocalUserDir(  // sessionsClass - server-side
   // allows remote code to get user data on local machine,  assume remote and local user are using same userid - (weak security)
@@ -243,8 +214,9 @@ getLocalUserDir(  // sessionsClass - server-side
   ,user    // 
   )
 {
-  const userDir = this.users[user];
-  return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
+  //const userDir = this.users[user];
+ // return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
+  return `${app.getSubAppPath("users",request)}/${this.user_info(request).path}`;  // local file system directory for loggin user
 }
 
 
@@ -353,13 +325,15 @@ getUserPathPrivate( // sessionsClass - server-side
 async getUserPathPublic( // sessionsClass - server-side
    usersDir        // points to users directory
   ,url             // is a URL object
+  ,response
   ) {
   
   const urlParts  = url.pathname.split("/",3);  // break url into array
   const user      = urlParts[1];       // userid 
   const publicDir = urlParts[2]        // name of public point, will be replaced with 
   const length    = 2 + user.length + publicDir.length;
-  const path      =  this.users[user]    // get user path
+  //const path      =  this.users[user]    // get user path
+  const path      =  this.user_info(response).path;    // get user path
 
   // 
   const configfile = await app.fsp.readFile(`${usersDir}/${path}/user.json`);
@@ -393,13 +367,12 @@ logged_in(
  ,request   // HTTPS request
  ,response  // HTTPS response
 ) {
- if (
-   // see if session exists
-  this.sessions[response.synergyRequest.sessionNumber]      === undefined || 
-  // see if user exists
-  this.sessions[response.synergyRequest.sessionNumber].user  === undefined  ||
-  // see if path lenght is zeeo
-  this.sessions[response.synergyRequest.sessionNumber].user.length    === 0
+ if (/*
+  this.sessions[response.synergyRequest.sessionNumber]      === undefined ||    // see if session exists
+  this.sessions[response.synergyRequest.sessionNumber].user  === undefined  ||  // see if user exists
+  this.sessions[response.synergyRequest.sessionNumber].user.length    === 0 // see if path lenght is zeeo
+  */
+  this.sessions[response.synergyRequest.sessionNumber]?.user  === undefined 
  ) {
   this.responseEnd(response,'{"msg":false}')
  } else {

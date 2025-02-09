@@ -349,7 +349,7 @@ async getFilePath( //  serverClass - server-side
         filePath += "/"+ this.sessions.getUserPathPrivate(response);
       } else if (subApp === "user") {
         // look at user profile makeing and allow acces to public directories.
-        filePath += "/" + await this.sessions.getUserPathPublic(filePath, url); 
+        filePath += "/" + await this.sessions.getUserPathPublic(filePath, url,response); 
       } else if (subAppConfig.class) {
         // do not think this is this used now - dwb
         filePath  = app[subAppConfig.class].getFilePath(request,response); 
