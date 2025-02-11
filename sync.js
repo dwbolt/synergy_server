@@ -115,7 +115,7 @@ async manifest( //  sync - server-side
 
   if         (msg.type === "client2server") {
       if        (msg.location === "local") {
-        this.directoryRead  =  app.sessions.getLocalUserDir(request, msg.user);
+        this.directoryRead  =  app.sessions.getLocalUserDir(request);
         directoryWrite      = `${this.directoryRead}/sync/${app.config.machine}`;  // assume userid for remote is same as userid for local  
       } else if (msg.location === "remote") {
         // manifes for remote serverthe one logged into  

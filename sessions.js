@@ -84,10 +84,13 @@ log(
   // then go straight to initRequest. If any of that ISN'T true, start a new session first.
   if (!(cookie.serverStart && cookie.serverStart == this.serverStart
         && cookie.sessionKey && this.sessions[cookie.sessionKey])) {
-          // start new session
-          sessionKey = this.sessionKey++;
-          this.initSession(sessionKey);
-          response.setHeader('Set-Cookie', [`serverStart=${this.serverStart};path="/"`, `sessionKey=${sessionKey};path="/"`]);
+      // start new session
+      sessionKey = this.sessionKey++;
+      this.initSession(sessionKey);
+      const domain = request.headers.host.split(':')[0]
+      const server_start = `serverStart=${this.serverStart}; path=/; domain=${domain}; HttpOnly; Secure; SameSite=Lax`
+      const session_key  = `sessionKey=${sessionKey}; path=/; domain=${domain}; HttpOnly; Secure; SameSite=Lax`
+      response.setHeader('Set-Cookie', [server_start,session_key]);
   } else {
     // session key is valid
     sessionKey = cookie.sessionKey;
@@ -161,6 +164,22 @@ responseEnd(
 }
 
 
+async user_info_get(
+  user // string, login user id
+){
+  let json;
+  try {
+    const file_name = `${app.config.usersDir}/${user}/_.json`; // file_name to load
+    const content   = await app.fsp.readFile(file_name)      ; // try to file, load user info from file
+    json            =  JSON.parse(content)                   ; // convert file to json
+  } catch (error) {
+    app.logs.error(`sessions.user_info_get loading ${file_name} error=${error}`  ,request,response);
+  }
+
+  return json  // return json stored in file for user, hass password digest and public web info
+}
+
+
 // public, used to login from html page
 async login( // sessionsClass - server-side
    clientMsg // message from client
@@ -169,9 +188,7 @@ async login( // sessionsClass - server-side
 ){
 
   try {
-    const file_name = `${app.config.usersDir}/${clientMsg.user}/_.json`;      // file_name to load
-    const content   = await app.fsp.readFile(file_name);                     // try to file, load user info from file
-    const json      = JSON.parse(content);                                    // convert file to json
+    const json =await this.user_info_get(clientMsg.user);
     const user      = json.name_user;
 
     if (json.digest === this.string2digestBase64(clientMsg.pwd)) {
@@ -190,33 +207,14 @@ async login( // sessionsClass - server-side
   }
 }
 
-user_info(response){
-  return this.sessions[response.synergyRequest.sessionNumber].user ;  // returns json associated with user request
-}
-
-/* does not seemed to be used 2025-02-09
-getUserDir(  // sessionsClass - server-side
-  request     //
-  ,user
-  )
-{
-  if (!user) {
-    user = this.parseCookies(request).userKey
-  }
-  const userDir = this.users[user];
-  return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
-}
-*/
 
 getLocalUserDir(  // sessionsClass - server-side
-  // allows remote code to get user data on local machine,  assume remote and local user are using same userid - (weak security)
+  // allows remote code to get user data to local machine,  assume remote and local user are using same userid - (weak security)
   request  //
-  ,user    // 
   )
 {
-  //const userDir = this.users[user];
- // return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
-  return `${app.getSubAppPath("users",request)}/${this.user_info(request).path}`;  // local file system directory for loggin user
+  const user_json =  this.sessions[response.synergyRequest.sessionNumber].user ;  // returns json associated with user request
+  return `${app.getSubAppPath("users",request)}/${user_json.path}`             ;  // local file system directory for loggin user
 }
 
 
@@ -324,7 +322,7 @@ getUserPathPrivate( // sessionsClass - server-side
 
 async getUserPathPublic( // sessionsClass - server-side
    usersDir        // points to users directory
-  ,url             // is a URL object
+  ,url             // is a URL object - this method modifies url.pathname
   ,response
   ) {
   
@@ -333,16 +331,17 @@ async getUserPathPublic( // sessionsClass - server-side
   const publicDir = urlParts[2]        // name of public point, will be replaced with 
   const length    = 2 + user.length + publicDir.length;
   //const path      =  this.users[user]    // get user path
-  const path      =  this.user_info(response).path;    // get user path
+  //const path      =  this.user_info(response).path;    // get user path
 
-  // 
-  const configfile = await app.fsp.readFile(`${usersDir}/${path}/user.json`);
-  const userConfig = JSON.parse( configfile );
-  const file       =  "/"+ userConfig.publicDirectorys[publicDir];                    // add public mount point
+  // get path to user data
+  const config = await this.user_info_get(user);
 
+  const share = JSON.parse( await app.fsp.readFile(`${usersDir}/${config.path}/share/_.json`) );  // json file
+  //const userConfig = JSON.parse( configfile );
   // return public file
-  url.pathname = url.pathname.slice(length);  // take off user and publicDir 
-  return path+file;
+  url.pathname = url.pathname.slice(length);  // take off user and publicDir, used by calling funtion
+  //return path+file;
+  return   `${config.path}/${share.publicDirectorys[publicDir]}`
 }
 
 
@@ -367,12 +366,10 @@ logged_in(
  ,request   // HTTPS request
  ,response  // HTTPS response
 ) {
- if (/*
-  this.sessions[response.synergyRequest.sessionNumber]      === undefined ||    // see if session exists
-  this.sessions[response.synergyRequest.sessionNumber].user  === undefined  ||  // see if user exists
-  this.sessions[response.synergyRequest.sessionNumber].user.length    === 0 // see if path lenght is zeeo
-  */
-  this.sessions[response.synergyRequest.sessionNumber]?.user  === undefined 
+ if (
+  this.sessions[response.synergyRequest.sessionNumber]             === undefined || // see if session exists
+  this.sessions[response.synergyRequest.sessionNumber].user        === undefined || // see if user exists
+  this.sessions[response.synergyRequest.sessionNumber].user.length === 0 // see if path lenght is zeeo
  ) {
   this.responseEnd(response,'{"msg":false}')
  } else {
@@ -431,3 +428,18 @@ parseCookies (
 
 // sessionsClass - server-side
 } //////// end
+
+
+/* does not seemed to be used 2025-02-09
+getUserDir(  // sessionsClass - server-side
+  request     //
+  ,user
+  )
+{
+  if (!user) {
+    user = this.parseCookies(request).userKey
+  }
+  const userDir = this.users[user];
+  return `${app.getSubAppPath("users",request)}/${userDir}`;  // local file system directory for loggin user
+}
+*/

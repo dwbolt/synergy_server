@@ -321,40 +321,48 @@ async getFilePath( //  serverClass - server-side
   ,response
   ) {  // return local file path for url
   let url = new URL(app.config.protocol +"://"+ request.headers.host + request.url);  // take care of convert %20 and other escape chacrters to string
-
-  const hostName     = url.hostname;    // just want hostname, without port #
-  const subApp       = url.pathname.split("/")[1];             // get the directory or application name, if at root level, will be filename
-  const subAppConfig = (subApp === "user" ? 
-    this.config.hosts[hostName][ "users" ] :    // "user" uses the the same starting bases as "users" - this code allows only "users" to be set in the domain config file
-    this.config.hosts[hostName][ subApp  ])     // try to get config for an application, will be undefined if at root level
-
+  
   if (url.pathname.length === 1) {
     // add default html file if only a directory is given
     url.pathname += "index.html";
   }
 
+  const hostName     = url.hostname              ; // just want hostname, without port #
+
+  // first "directory" of url can be mapped to somewhere not under the default of web file, the mapping is defined in server config file for domain name
+  const subApp       = url.pathname.split("/")[1]; // get the directory or application name, if at root level, will be filename
+  const subAppConfig = (subApp === "user" ? 
+    this.config.hosts[hostName][ "users" ] :    // subApp === "user" so return directory of config file where user
+    this.config.hosts[hostName][ subApp  ])     // try to get config for an application, will be undefined if at root level
+
   // find root server path
   let filePath;
   if (subAppConfig) {
-      if (0<url.pathname.length) {
-        // take off subApp part of url
-        url.pathname = url.pathname.slice(subApp.length+1);
-      }
+    // were are mapping file requst to non-default directory
+    if (0<url.pathname.length) {
+      // take off subApp part of url
+      url.pathname = url.pathname.slice(subApp.length+1);
+    }
 
-      // default case, subApp in config file
-      filePath = subAppConfig.filePath;
+    filePath = subAppConfig.filePath;  // start with file root from config file
 
-      if (subApp === "users") {
-        // make sure they are logged in, then add their subdirectory
-        filePath += "/"+ this.sessions.getUserPathPrivate(response);
-      } else if (subApp === "user") {
-        // look at user profile makeing and allow acces to public directories.
-        filePath += "/" + await this.sessions.getUserPathPublic(filePath, url,response); 
-      } else if (subAppConfig.class) {
-        // do not think this is this used now - dwb
-        filePath  = app[subAppConfig.class].getFilePath(request,response); 
+    if (subApp === "users") {
+      // make sure they are logged in, then add their subdirectory
+      const path = this.sessions.getUserPathPrivate(response);
+      filePath += "/"+ path;
+      if (path === undefined) {
+        app.logs.error(`file="server" method="getFilePath" filePath = "${filePath}" request.url="${request.url}"`,request,response);
       }
+    } else if (subApp === "user") {
+      // look at user profile makeing and allow acces to public directories.
+      filePath += "/" + await this.sessions.getUserPathPublic(filePath, url,response); 
+    } else if (subAppConfig.class) {
+      // do not think this is this used now - dwb, so just log error
+      //filePath  = app[subAppConfig.class].getFilePath(request,response); 
+      app.logs.error(`file="server" method="getFilePath" request.url="${request.url}"`,request,response);
+    }
   } else {
+    // subapp was not defined, so use just append filepath to root location of web site.
     filePath = this.config.hosts[hostName][""].filePath;  // get the default path
   }
 
