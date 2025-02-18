@@ -334,14 +334,15 @@ async getUserPathPublic( // sessionsClass - server-side
   //const path      =  this.user_info(response).path;    // get user path
 
   // get path to user data
-  const config = await this.user_info_get(user);
-
-  const share = JSON.parse( await app.fsp.readFile(`${usersDir}/${config.path}/share/_.json`) );  // json file
-  //const userConfig = JSON.parse( configfile );
-  // return public file
-  url.pathname = url.pathname.slice(length);  // take off user and publicDir, used by calling funtion
-  //return path+file;
-  return   `${config.path}/${share.publicDirectorys[publicDir]}`
+  try {
+    const config = await this.user_info_get(user);
+    const string = await app.fsp.readFile(`${usersDir}/${config.path}/share/_.json`) ;
+    const share = JSON.parse(string );  // json file
+    url.pathname = url.pathname.slice(length);  // take off user and publicDir, used by calling funtion
+    return   `${config.path}/${share.publicDirectorys[publicDir]}`
+  } catch (error) {
+    app.logs.error(error,undefined,response); 
+  }
 }
 
 
