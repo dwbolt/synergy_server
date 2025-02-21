@@ -167,9 +167,9 @@ responseEnd(
 async user_info_get(
   user // string, login user id
 ){
-  let json;
+  let json,file_name;
   try {
-    const file_name = `${app.config.usersDir}/${user}/_.json`; // file_name to load
+    file_name = `${app.config.usersDir}/${user}/_.json`; // file_name to load
     const content   = await app.fsp.readFile(file_name)      ; // try to file, load user info from file
     json            =  JSON.parse(content)                   ; // convert file to json
   } catch (error) {
@@ -202,7 +202,7 @@ async login( // sessionsClass - server-side
       app.logs.error(`sessions.login pwdDigest failed user ${user}`  ,request,response);
     }
   } catch (error) {
-    app.logs.error(`sessions.login loading ${file_name} error=${e}`  ,request,response);
+    app.logs.error(`sessions.login error=${error}`  ,request,response);
     this.responseEnd(response,'{"msg":false}');
   }
 }
