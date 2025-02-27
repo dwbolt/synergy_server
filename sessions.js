@@ -82,15 +82,17 @@ log(
   // If the cookie has a serverStart attribute that matches the current server instance,
   // and it has a valid session key (one that's a key in this.sessions),
   // then go straight to initRequest. If any of that ISN'T true, start a new session first.
-  if (!(cookie.serverStart && cookie.serverStart == this.serverStart
-        && cookie.sessionKey && this.sessions[cookie.sessionKey])) {
+  if (!(cookie?.serverStart == this.serverStart &&  
+        this.sessions[cookie?.sessionKey])) {
       // start new session
       sessionKey = this.sessionKey++;
       this.initSession(sessionKey);
-      const domain = request.headers.host.split(':')[0]
-      const server_start = `serverStart=${this.serverStart}; path=/; domain=${domain}; HttpOnly; Secure; SameSite=Lax`
-      const session_key  = `sessionKey=${sessionKey}; path=/; domain=${domain}; HttpOnly; Secure; SameSite=Lax`
-      response.setHeader('Set-Cookie', [server_start,session_key]);
+      //const domain = request.headers.host.split(':')[0]
+      //const server_start = `serverStart=${this.serverStart}; path=/; domain=${domain}; HttpOnly; Secure; SameSite=Lax`
+      //const session_key  = `sessionKey=${sessionKey}; path=/; domain=${domain}; HttpOnly; Secure; SameSite=Lax`
+      const server_start = `serverStart=${this.serverStart}; path=/; HttpOnly; Secure; SameSite=Lax` // omiting domain will fource each domain to have it's own set of cookies
+      const session_key  = `sessionKey=${sessionKey}; path=/; HttpOnly; Secure; SameSite=Lax`        // accourd tin ChatGPT, we will see
+      response.setHeader('Set-Cookie', [server_start, session_key]);
   } else {
     // session key is valid
     sessionKey = cookie.sessionKey;
@@ -193,7 +195,7 @@ async login( // sessionsClass - server-side
 
     if (json.digest === this.string2digestBase64(clientMsg.pwd)) {
       // login successful
-      response.setHeader('Set-Cookie', [ `userKey=${user};path="/"`]);
+      response.setHeader('Set-Cookie', [ `userKey=${user}; path="/"; HttpOnly; Secure; SameSite=Lax`]);
       this.responseEnd(response,`{"msg":true, "nameFirst":"${json.name_first}", "nameLast":"${json.name_last}"}`);
       // store user with their session
       this.sessions[response.synergyRequest.sessionNumber].user = json;  // save data of logined user with session
@@ -356,7 +358,7 @@ logout(
   delete this.sessions[response.synergyRequest.sessionNumber].user;
 
   // remove user from their session on client
-  response.setHeader('Set-Cookie', [ `userKey=;path="/"`]);
+  response.setHeader('Set-Cookie', [ `userKey=; path="/"; HttpOnly; Secure; SameSite=Lax`]);
   this.responseEnd(response,'{"msg":true}');
 }
 
